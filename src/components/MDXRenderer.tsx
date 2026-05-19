@@ -1,4 +1,4 @@
-import { MDXRemote } from 'next-mdx-remote/rsc'
+import { compileMDX } from 'next-mdx-remote/rsc'
 import remarkGfm from 'remark-gfm'
 import { Callout } from './Callout'
 import { CodeBlock } from './CodeBlock'
@@ -35,18 +35,20 @@ interface MDXRendererProps {
   source: string
 }
 
-export function MDXRenderer({ source }: MDXRendererProps) {
+export async function MDXRenderer({ source }: MDXRendererProps) {
+  const { content } = await compileMDX({
+    source,
+    components,
+    options: {
+      mdxOptions: {
+        remarkPlugins: [remarkGfm],
+      },
+    },
+  })
+
   return (
     <div className="prose prose-gray max-w-none">
-      <MDXRemote
-        source={source}
-        components={components}
-        options={{
-          mdxOptions: {
-            remarkPlugins: [remarkGfm],
-          },
-        }}
-      />
+      {content}
     </div>
   )
 }
