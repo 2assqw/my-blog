@@ -55,8 +55,8 @@ review 当前分支的改动
 
 下面是一个使用 Next.js + MDX 搭建个人博客的简单示例：
 
-<CodeBlock filename="app/blog/[slug]/page.tsx">
-{`import { getPost, getBlogPosts } from '@/lib/posts'
+```tsx
+import { getPost, getBlogPosts } from '@/lib/posts'
 import { MDXRenderer } from '@/components/MDXRenderer'
 
 export async function generateStaticParams() {
@@ -77,8 +77,8 @@ export default async function BlogPost({
       <MDXRenderer source={post.content} />
     </article>
   )
-}`}
-</CodeBlock>
+}
+```
 
 ## 注意事项
 
