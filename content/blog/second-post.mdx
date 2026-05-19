@@ -1,0 +1,98 @@
+---
+title: '示例文章：Claude Code 入门指南'
+date: '2026-05-19'
+tags: ['AI', '开发工具', 'Claude']
+summary: '了解如何用 Claude Code 提升开发效率，从安装到常用命令。'
+---
+
+## 什么是 Claude Code
+
+Claude Code 是 Anthropic 推出的命令行 AI 编程助手，可以直接在终端中使用。
+
+## 安装
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+安装完成后，在任意项目目录下运行：
+
+```bash
+claude
+```
+
+<Callout type="info">
+  首次使用需要登录 Anthropic 账号。
+</Callout>
+
+## 常用功能
+
+### 1. 代码生成
+
+直接描述需求，Claude Code 会生成代码并写入文件：
+
+```
+帮我写一个用户登录接口，使用 JWT 认证
+```
+
+### 2. 代码审查
+
+```
+review 当前分支的改动
+```
+
+### 3. Bug 修复
+
+```
+运行测试之后帮我修复失败的用例
+```
+
+<Callout type="tip">
+  描述需求时越具体，Claude Code 给出的结果越准确。
+</Callout>
+
+## 实际案例：搭建博客
+
+下面是一个使用 Next.js + MDX 搭建个人博客的简单示例：
+
+<CodeBlock filename="app/blog/[slug]/page.tsx">
+{`import { getPost, getBlogPosts } from '@/lib/posts'
+import { MDXRenderer } from '@/components/MDXRenderer'
+
+export async function generateStaticParams() {
+  const posts = getBlogPosts()
+  return posts.map((p) => ({ slug: p.slug }))
+}
+
+export default async function BlogPost({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const post = getPost('blog', slug)
+  return (
+    <article>
+      <h1>{post.frontmatter.title}</h1>
+      <MDXRenderer source={post.content} />
+    </article>
+  )
+}`}
+</CodeBlock>
+
+## 注意事项
+
+<Callout type="warning">
+  Claude Code 会直接修改你的文件，建议使用 Git 做好版本管理，以便随时回退。
+</Callout>
+
+## 总结
+
+Claude Code 是一个功能强大的 AI 编程助手：
+
+- 支持自然语言交互
+- 可直接操作文件系统
+- 理解完整项目上下文
+- 支持多种编程语言
+
+对于日常开发任务，它能显著提升效率。
