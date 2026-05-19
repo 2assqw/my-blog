@@ -1,0 +1,10 @@
+{
+  "name": "My Blog",
+  "description": "使用 Next.js + MDX 构建的个人博客，支持技术文章和生活随笔。Apple 风格动画。",
+  "tags": ["nextjs", "react", "tailwindcss", "mdx"],
+  "links": {
+    "live": "https://example.com",
+    "github": "https://github.com/example/my-blog"
+  },
+  "image": ""
+}
