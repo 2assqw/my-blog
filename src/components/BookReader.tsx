@@ -66,47 +66,48 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
   const [showInput, setShowInput] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pageRefs = useRef({ pages: [] as string[], current: 0, flipping: false })
   const parsedRef = useRef(false)
 
-  // Walk rendered DOM and split into pages (runs once — SSG content is static)
+  // Walk rendered DOM and split into pages (runs once on mount)
   useEffect(() => {
-    if (!parsedRef.current && contentRef.current && contentRef.current.children.length > 0) {
+    if (contentRef.current && contentRef.current.children.length > 0) {
       const result = splitPages(contentRef.current, 1000)
+      pageRefs.current.pages = result
       setPages(result)
       parsedRef.current = true
     }
-  })
+  }, [])
 
   const total = pages.length
   const isFirst = current === 0
   const isLast = current === total - 1 || total === 0
 
-  const flip = useCallback(
-    (dir: 'forward' | 'backward') => {
-      if (flipping) return
-      if (dir === 'forward' && isLast) return
-      if (dir === 'backward' && isFirst) return
-      setFlipping(dir)
-      setTimeout(() => {
-        setFlipping(null)
-        setCurrent((p) => (dir === 'forward' ? p + 1 : p - 1))
-      }, 400)
-    },
-    [flipping, isFirst, isLast],
-  )
+  // Keep refs in sync so keyboard handler stays stable
+  pageRefs.current.current = current
+  pageRefs.current.flipping = !!flipping
 
-  const goNext = useCallback(() => flip('forward'), [flip])
-  const goPrev = useCallback(() => flip('backward'), [flip])
+  const flip = useCallback((dir: 'forward' | 'backward') => {
+    const { current: c, flipping: f, pages: p } = pageRefs.current
+    if (f) return
+    if (dir === 'forward' && c >= p.length - 1) return
+    if (dir === 'backward' && c === 0) return
+    setFlipping(dir)
+    setTimeout(() => {
+      setFlipping(null)
+      setCurrent((prev) => (dir === 'forward' ? prev + 1 : prev - 1))
+    }, 400)
+  }, [])
 
-  // Keyboard navigation
+  // Keyboard navigation (stable — flip reads refs, not state)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') goNext()
-      else if (e.key === 'ArrowLeft') goPrev()
+      if (e.key === 'ArrowRight') flip('forward')
+      else if (e.key === 'ArrowLeft') flip('backward')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goNext, goPrev])
+  }, [flip])
 
   // Focus input when toggled
   useEffect(() => {
@@ -148,22 +149,24 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
 
   return (
     <div className="book-reader">
-      {/* ---- hidden DOM for parsing ---- */}
-      <div
-        ref={contentRef}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          left: -9999,
-          top: 0,
-          visibility: 'hidden',
-          pointerEvents: 'none',
-          width: '75%',
-          maxWidth: 700,
-        }}
-      >
-        {children}
-      </div>
+      {/* ---- hidden DOM for parsing — unmounted after pages are ready ---- */}
+      {!parsedRef.current && (
+        <div
+          ref={contentRef}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: -9999,
+            top: 0,
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            width: '75%',
+            maxWidth: 700,
+          }}
+        >
+          {children}
+        </div>
+      )}
 
       {/* ---- top bar ---- */}
       <div className="book-topbar">
@@ -179,7 +182,7 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
         {/* Left hot zone */}
         <div
           className={`book-hotzone book-hotzone-left ${isFirst ? 'pointer-events-none' : ''}`}
-          onClick={goPrev}
+          onClick={() => flip('backward')}
         >
           <div className={`book-arrow ${isFirst ? 'opacity-0' : ''}`}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -200,7 +203,7 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
         {/* Right hot zone */}
         <div
           className={`book-hotzone book-hotzone-right ${isLast ? 'pointer-events-none' : ''}`}
-          onClick={goNext}
+          onClick={() => flip('forward')}
         >
           <div className={`book-arrow ${isLast ? 'opacity-0' : ''}`}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -214,7 +217,7 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
       <div className="book-bottombar">
         <button
           className={`text-gray-400 hover:text-gray-700 transition-colors ${isFirst ? 'invisible' : ''}`}
-          onClick={goPrev}
+          onClick={() => flip('backward')}
         >
           ←
         </button>
@@ -242,7 +245,7 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
 
         <button
           className={`text-gray-700 hover:text-gray-900 transition-colors ${isLast ? 'invisible' : ''}`}
-          onClick={goNext}
+          onClick={() => flip('forward')}
         >
           →
         </button>

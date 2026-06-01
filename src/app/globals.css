@@ -421,8 +421,6 @@
   overflow-y: auto;
   font-size: 17px;
   line-height: 2;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
   position: relative;
 }
 
@@ -459,11 +457,15 @@
 
 .flip-forward {
   position: absolute;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
   animation: flip-out-left 0.4s ease-in-out forwards;
 }
 
 .flip-backward {
   position: absolute;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
   animation: flip-out-right 0.4s ease-in-out forwards;
 }
 
