@@ -20,15 +20,15 @@ export default function AboutPage() {
       <div className="prose prose-gray max-w-none">
         <FadeUp delay={0.1}>
           <p>
-            Hi，我是一名前端开发者。喜欢用代码创造东西，也喜欢记录生活中的思考。
+            Hi，我是一名前端开发者。喜欢创造新东西，也喜欢记录生活中的思考。
           </p>
         </FadeUp>
         <FadeUp delay={0.2}>
           <h2>Skills</h2>
           <ul>
-            <li>Frontend: React, Next.js, TypeScript, Tailwind CSS</li>
-            <li>Backend: Node.js, Express</li>
-            <li>Tools: Git, VS Code, Figma</li>
+            <li>Frontend: Vibe coding</li>
+            <li>Backend: C, C++(learning)</li>
+            <li>Tools: Git, VS Code, AI</li>
           </ul>
         </FadeUp>
         <FadeUp delay={0.3}>
@@ -40,9 +40,16 @@ export default function AboutPage() {
             </a>
           </p>
           <p>
-            Email:{' '}
+            E-mail:{' '}
             <a href="mailto:2782225993@qq.com">2782225993@qq.com</a>
+            {' / '}
+            <a href="mailto:dalepop828@gmail.com">dalepop828@gmail.com</a>
           </p>
+          <h2>Favorite</h2>
+          <ul>
+            <li>Reading</li>
+            <li>Eating</li>
+          </ul>
         </FadeUp>
       </div>
       </div>
