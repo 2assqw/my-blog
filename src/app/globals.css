@@ -269,6 +269,6 @@
 .prose h3:hover,
 .prose h4:hover,
 .prose blockquote:hover {
-  transform: scale(1.012);
+  transform: scale(1.015);
   background-color: rgba(79, 70, 229, 0.03);
 }
