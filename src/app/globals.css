@@ -247,3 +247,28 @@
   z-index: 0;
   animation: pulse-subtle 5s ease-in-out infinite;
 }
+
+/* --- Reading magnifier: prose hover on article pages --- */
+
+.prose p,
+.prose li,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose blockquote {
+  transition: transform 0.25s ease, background-color 0.25s ease;
+  transform-origin: left center;
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin-inline: -4px;
+}
+
+.prose p:hover,
+.prose li:hover,
+.prose h2:hover,
+.prose h3:hover,
+.prose h4:hover,
+.prose blockquote:hover {
+  transform: scale(1.012);
+  background-color: rgba(79, 70, 229, 0.03);
+}
