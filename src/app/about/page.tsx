@@ -26,8 +26,8 @@ export default function AboutPage() {
         <FadeUp delay={0.2}>
           <h2>Skills</h2>
           <ul>
-            <li>Frontend: Vibe coding</li>
-            <li>Backend: C, C++(learning)</li>
+            <li>Trying: Vibe coding</li>
+            <li>Language: C, C++(learning)</li>
             <li>Tools: Git, VS Code, AI</li>
           </ul>
         </FadeUp>
