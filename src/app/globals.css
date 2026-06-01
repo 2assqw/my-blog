@@ -7,6 +7,18 @@
     @apply bg-gray-50 text-gray-800 antialiased;
   }
 
+  /* Global paper noise texture — SVG feTurbulence, barely visible */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
   ::selection {
     @apply bg-brand-100 text-brand-700;
   }
@@ -45,7 +57,7 @@
   50%      { opacity: 0.8; }
 }
 
-/* --- Home page: two floating brand-color blobs --- */
+/* --- Home page: two floating brand-color blobs + diamond grid --- */
 
 .deco-home-blob {
   position: absolute;
@@ -71,6 +83,19 @@
   bottom: 10%;
   left: -100px;
   animation: float-2 25s ease-in-out infinite;
+}
+
+.deco-home-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+  background-image:
+    linear-gradient(30deg, rgba(79,70,229,0.04) 1px, transparent 1px),
+    linear-gradient(-30deg, rgba(79,70,229,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 70% at 50% 40%, black 30%, transparent 80%);
 }
 
 /* --- List pages (Blog/Essay): top gradient bar + subtle dots --- */
@@ -245,10 +270,17 @@
 
 /* --- Reading magnifier: prose hover on article pages --- */
 
-/* Force entire prose block onto GPU layer so sub-pixel scaling is sharp */
+/* Article notebook ruled lines */
 .prose {
   transform: translateZ(0);
   backface-visibility: hidden;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 27px,
+    rgba(79, 70, 229, 0.04) 27px,
+    rgba(79, 70, 229, 0.04) 28px
+  );
 }
 
 .prose p,

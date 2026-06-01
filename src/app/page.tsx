@@ -11,6 +11,7 @@ export default async function HomePage() {
     <div className="relative overflow-hidden">
       <div className="deco-home-blob deco-home-blob--a" />
       <div className="deco-home-blob deco-home-blob--b" />
+      <div className="deco-home-grid" />
       <div className="mx-auto max-w-3xl px-6 py-16 relative z-[1]">
       <section className="mb-20">
         <FadeUp>
