@@ -11,8 +11,6 @@ interface BookReaderProps {
   children: ReactNode
 }
 
-// ---- pagination: walk DOM, break at paragraph boundaries ----
-
 function splitPages(container: HTMLElement, targetChars: number): string[] {
   const pages: string[] = []
   let currentHtml = ''
@@ -52,9 +50,7 @@ function splitPages(container: HTMLElement, targetChars: number): string[] {
     }
   }
 
-  if (pendingHeading) {
-    currentHtml += pendingHeading
-  }
+  if (pendingHeading) currentHtml += pendingHeading
   if (currentHtml) pages.push(currentHtml)
   return pages.length > 0 ? pages : ['']
 }
@@ -69,7 +65,6 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
   const pageRefs = useRef({ pages: [] as string[], current: 0, flipping: false })
   const parsedRef = useRef(false)
 
-  // Walk rendered DOM and split into pages (runs once on mount)
   useEffect(() => {
     if (contentRef.current && contentRef.current.children.length > 0) {
       const result = splitPages(contentRef.current, 1000)
@@ -83,7 +78,6 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
   const isFirst = current === 0
   const isLast = current === total - 1 || total === 0
 
-  // Keep refs in sync so keyboard handler stays stable
   pageRefs.current.current = current
   pageRefs.current.flipping = !!flipping
 
@@ -99,7 +93,6 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
     }, 400)
   }, [])
 
-  // Keyboard navigation (stable — flip reads refs, not state)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') flip('forward')
@@ -109,7 +102,6 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
     return () => window.removeEventListener('keydown', onKey)
   }, [flip])
 
-  // Focus input when toggled
   useEffect(() => {
     if (showInput && inputRef.current) {
       inputRef.current.focus()
@@ -120,14 +112,10 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
   const handlePageJump = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const num = parseInt(e.currentTarget.value, 10)
-      if (num >= 1 && num <= total) {
-        setCurrent(num - 1)
-      }
+      if (num >= 1 && num <= total) setCurrent(num - 1)
       setShowInput(false)
     }
   }
-
-  // ---- flip class helpers ----
 
   const cardClass = (isFlipTarget: boolean) => {
     if (!flipping) return 'book-card'
@@ -143,13 +131,8 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
     />
   )
 
-  if (!total) {
-    return <div className="text-gray-400 text-center py-20">Loading...</div>
-  }
-
   return (
     <div className="book-reader">
-      {/* ---- hidden DOM for parsing — unmounted after pages are ready ---- */}
       {!parsedRef.current && (
         <div
           ref={contentRef}
@@ -168,88 +151,88 @@ export function BookReader({ title, date, backHref, backLabel, children }: BookR
         </div>
       )}
 
-      {/* ---- top bar ---- */}
-      <div className="book-topbar">
-        <Link href={backHref} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-          ← {backLabel}
-        </Link>
-        <span className="text-xs font-semibold text-gray-800 truncate max-w-[50%]">{title}</span>
-        <span className="text-xs text-gray-400">{date}</span>
-      </div>
-
-      {/* ---- page stage ---- */}
-      <div className="book-stage">
-        {/* Left hot zone */}
-        <div
-          className={`book-hotzone book-hotzone-left ${isFirst ? 'pointer-events-none' : ''}`}
-          onClick={() => flip('backward')}
-        >
-          <div className={`book-arrow ${isFirst ? 'opacity-0' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 19l-7-7 7-7" />
-            </svg>
+      {!total ? (
+        <div className="flex items-center justify-center flex-1 text-gray-400">Loading...</div>
+      ) : (
+        <>
+          <div className="book-topbar">
+            <Link href={backHref} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              ← {backLabel}
+            </Link>
+            <span className="text-xs font-semibold text-gray-800 truncate max-w-[50%]">{title}</span>
+            <span className="text-xs text-gray-400">{date}</span>
           </div>
-        </div>
 
-        {/* Page card */}
-        <div className="book-viewport">
-          {flipping && flipping === 'forward'
-            ? [renderPage(current, true), renderPage(current + 1, false)]
-            : flipping && flipping === 'backward'
-              ? [renderPage(current, true), renderPage(current - 1, false)]
-              : renderPage(current, false)}
-        </div>
+          <div className="book-stage">
+            <div
+              className={`book-hotzone book-hotzone-left ${isFirst ? 'pointer-events-none' : ''}`}
+              onClick={() => flip('backward')}
+            >
+              <div className={`book-arrow ${isFirst ? 'opacity-0' : ''}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+            </div>
 
-        {/* Right hot zone */}
-        <div
-          className={`book-hotzone book-hotzone-right ${isLast ? 'pointer-events-none' : ''}`}
-          onClick={() => flip('forward')}
-        >
-          <div className={`book-arrow ${isLast ? 'opacity-0' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
+            <div className="book-viewport">
+              {flipping && flipping === 'forward'
+                ? [renderPage(current, true), renderPage(current + 1, false)]
+                : flipping && flipping === 'backward'
+                  ? [renderPage(current, true), renderPage(current - 1, false)]
+                  : renderPage(current, false)}
+            </div>
+
+            <div
+              className={`book-hotzone book-hotzone-right ${isLast ? 'pointer-events-none' : ''}`}
+              onClick={() => flip('forward')}
+            >
+              <div className={`book-arrow ${isLast ? 'opacity-0' : ''}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* ---- bottom bar ---- */}
-      <div className="book-bottombar">
-        <button
-          className={`text-gray-400 hover:text-gray-700 transition-colors ${isFirst ? 'invisible' : ''}`}
-          onClick={() => flip('backward')}
-        >
-          ←
-        </button>
+          <div className="book-bottombar">
+            <button
+              className={`text-gray-400 hover:text-gray-700 transition-colors ${isFirst ? 'invisible' : ''}`}
+              onClick={() => flip('backward')}
+            >
+              ←
+            </button>
 
-        {showInput ? (
-          <input
-            ref={inputRef}
-            type="number"
-            min={1}
-            max={total}
-            className="book-page-input"
-            defaultValue={current + 1}
-            onKeyDown={handlePageJump}
-            onBlur={() => setShowInput(false)}
-          />
-        ) : (
-          <button
-            className="book-page-indicator"
-            onClick={() => setShowInput(true)}
-            title="点击输入页码跳转"
-          >
-            {current + 1} / {total}
-          </button>
-        )}
+            {showInput ? (
+              <input
+                ref={inputRef}
+                type="number"
+                min={1}
+                max={total}
+                className="book-page-input"
+                defaultValue={current + 1}
+                onKeyDown={handlePageJump}
+                onBlur={() => setShowInput(false)}
+              />
+            ) : (
+              <button
+                className="book-page-indicator"
+                onClick={() => setShowInput(true)}
+                title="点击输入页码跳转"
+              >
+                {current + 1} / {total}
+              </button>
+            )}
 
-        <button
-          className={`text-gray-700 hover:text-gray-900 transition-colors ${isLast ? 'invisible' : ''}`}
-          onClick={() => flip('forward')}
-        >
-          →
-        </button>
-      </div>
+            <button
+              className={`text-gray-700 hover:text-gray-900 transition-colors ${isLast ? 'invisible' : ''}`}
+              onClick={() => flip('forward')}
+            >
+              →
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
