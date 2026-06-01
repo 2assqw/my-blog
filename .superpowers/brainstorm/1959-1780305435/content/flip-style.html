@@ -1,0 +1,26 @@
+<h2>你想要的翻页效果更接近哪种？</h2>
+<p class="subtitle">参照常见阅读 App 的翻页体验</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>3D 卷页</h3>
+      <p>像翻纸质书，页面从右侧掀起、卷曲翻转。iOS Books / Apple Books 风格。实现最复杂，需要 CSS 3D perspective + transform。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>水平滑动</h3>
+      <p>页面从右滑入、旧页向左滑出。微信读书风格。用 CSS translateX + opacity 过渡，简洁流畅。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>淡入淡出</h3>
+      <p>当前页渐隐、新页渐显。Kindle App 风格。最轻量，纯 opacity 过渡，阅读干扰最小。</p>
+    </div>
+  </div>
+</div>

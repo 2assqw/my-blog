@@ -308,3 +308,227 @@
   transform: scale(1.02) translateZ(0);
   background-color: rgba(79, 70, 229, 0.03);
 }
+
+/* ================================================================
+   BookReader — 3D page-flip reading experience
+   ================================================================ */
+
+.book-reader {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px - 3rem);
+  background: #faf9f6;
+}
+
+/* ---- Top bar ---- */
+
+.book-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  border-bottom: 1px solid #e5e0d8;
+  flex-shrink: 0;
+}
+
+/* ---- Stage (page area + hot zones) ---- */
+
+.book-stage {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 0;
+}
+
+/* ---- Hot zones ---- */
+
+.book-hotzone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12.5%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s linear;
+}
+
+.book-hotzone-left {
+  left: 0;
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.06) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s linear;
+}
+
+.book-hotzone-right {
+  right: 0;
+  background: linear-gradient(270deg, rgba(79, 70, 229, 0.06) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s linear;
+}
+
+.book-stage:hover .book-hotzone-left,
+.book-stage:hover .book-hotzone-right {
+  opacity: 1;
+}
+
+/* ---- Arrow indicator ---- */
+
+.book-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.1);
+  color: rgba(79, 70, 229, 0.6);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s linear, transform 0.2s linear;
+}
+
+.book-hotzone:hover .book-arrow {
+  opacity: 0.7;
+  transform: scale(1);
+}
+
+/* ---- Viewport (card container) ---- */
+
+.book-viewport {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  position: relative;
+}
+
+/* ---- Page card ---- */
+
+.book-card {
+  width: 75%;
+  max-width: 700px;
+  height: 100%;
+  background: #fff;
+  box-shadow: 2px 4px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 2px 8px 8px 2px;
+  padding: 48px;
+  overflow-y: auto;
+  font-size: 17px;
+  line-height: 2;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  position: relative;
+}
+
+.book-card > :first-child { margin-top: 0; }
+.book-card > :last-child  { margin-bottom: 0; }
+
+.book-card-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- 3D flip animations ---- */
+
+@keyframes flip-out-left {
+  from { transform: rotateY(0deg) translateX(0); opacity: 1; }
+  to   { transform: rotateY(-55deg) translateX(-30%); opacity: 0; }
+}
+
+@keyframes flip-in-right {
+  from { transform: rotateY(55deg) translateX(30%); opacity: 0; }
+  to   { transform: rotateY(0deg) translateX(0); opacity: 1; }
+}
+
+@keyframes flip-out-right {
+  from { transform: rotateY(0deg) translateX(0); opacity: 1; }
+  to   { transform: rotateY(55deg) translateX(30%); opacity: 0; }
+}
+
+@keyframes flip-in-left {
+  from { transform: rotateY(-55deg) translateX(-30%); opacity: 0; }
+  to   { transform: rotateY(0deg) translateX(0); opacity: 1; }
+}
+
+.flip-forward {
+  position: absolute;
+  animation: flip-out-left 0.4s ease-in-out forwards;
+}
+
+.flip-backward {
+  position: absolute;
+  animation: flip-out-right 0.4s ease-in-out forwards;
+}
+
+.flip-forward + .book-card-hidden {
+  animation: flip-in-right 0.4s ease-in-out forwards;
+}
+
+.flip-backward + .book-card-hidden {
+  animation: flip-in-left 0.4s ease-in-out forwards;
+}
+
+/* ---- Bottom bar ---- */
+
+.book-bottombar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 8px 20px;
+  border-top: 1px solid #e5e0d8;
+  flex-shrink: 0;
+}
+
+/* ---- Page indicator ---- */
+
+.book-page-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  border: none;
+  background: none;
+  border-bottom: 1px dashed #aaa;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.book-page-indicator:hover {
+  color: #4F46E5;
+  border-bottom-color: #4F46E5;
+}
+
+/* ---- Page jump input ---- */
+
+.book-page-input {
+  width: 80px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 3px 8px;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+
+.book-page-input::-webkit-inner-spin-button,
+.book-page-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.book-page-input:focus {
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}

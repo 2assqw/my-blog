@@ -1,0 +1,50 @@
+<h2>阅读器布局 v3</h2>
+<p class="subtitle">中央页面放大至 75% 宽度，热区各 12.5%</p>
+
+<div class="mockup">
+  <div class="mockup-header">放大后的页面</div>
+  <div class="mockup-body">
+    <div style="display:flex;flex-direction:column;min-height:620px;background:#faf9f6;border:1px solid #e5e0d8;border-radius:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e5e0d8;">
+        <span style="font-size:13px;color:#888;">← Back to Blog</span>
+        <span style="font-size:13px;color:#333;font-weight:600;">Hello World</span>
+        <span style="font-size:13px;color:#888;">2026-05-18</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+        <!-- Left hot zone 12.5% -->
+        <div style="position:absolute;left:0;top:0;bottom:0;width:12.5%;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <div style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(79,70,229,0.1);opacity:0.6;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(79,70,229,0.6)" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </div>
+        </div>
+        <!-- Right hot zone 12.5% -->
+        <div style="position:absolute;right:0;top:0;bottom:0;width:12.5%;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <div style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(79,70,229,0.1);opacity:0.6;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(79,70,229,0.6)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <!-- Page content 75% -->
+        <div style="width:75%;max-width:700px;background:#fff;box-shadow:2px 4px 24px rgba(0,0,0,0.08);border-radius:2px 8px 8px 2px;padding:52px 48px;font-size:17px;line-height:2;">
+          <p style="color:#333;margin-bottom:1.2em;">Claude Code 是 Anthropic 推出的命令行 AI 编程助手，可以直接在终端中使用。</p>
+          <p style="color:#555;font-size:15px;margin-bottom:1.2em;">安装完成后，在任意项目目录下运行 claude 命令即可开始使用。</p>
+          <p style="color:#555;font-size:15px;margin-bottom:1.2em;">首次使用需要登录 Anthropic 账号。直接描述需求，Claude Code 会生成代码并写入文件。</p>
+          <p style="color:#555;font-size:15px;">描述需求时越具体，Claude Code 给出的结果越准确。对于日常开发任务，它能显著提升效率。</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:14px 20px;border-top:1px solid #e5e0d8;">
+        <span style="color:#ccc;">←</span>
+        <span style="font-size:14px;font-weight:600;color:#333;cursor:pointer;border-bottom:1px dashed #aaa;padding:2px 8px;" title="点击输入页码跳转">3 / 8</span>
+        <span style="color:#333;">→</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>调整点</h3>
+  <ul>
+    <li>页面宽度 60% → <strong>75%</strong>，文字区域更宽敞</li>
+    <li>字号 16px → <strong>17px</strong>，行高 1.9 → <strong>2.0</strong></li>
+    <li>热区各占 10% → <strong>12.5%</strong></li>
+  </ul>
+</div>
