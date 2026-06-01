@@ -250,14 +250,23 @@
 
 /* --- Reading magnifier: prose hover on article pages --- */
 
+/* Force entire prose block onto GPU layer so sub-pixel scaling is sharp */
+.prose {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 .prose p,
 .prose li,
 .prose h2,
 .prose h3,
 .prose h4,
 .prose blockquote {
-  transition: transform 0.25s ease, background-color 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
+              background-color 0.3s ease;
   transform-origin: left center;
+  will-change: transform;
+  backface-visibility: hidden;
   border-radius: 6px;
   padding: 2px 4px;
   margin-inline: -4px;
@@ -269,6 +278,6 @@
 .prose h3:hover,
 .prose h4:hover,
 .prose blockquote:hover {
-  transform: scale(1.015);
+  transform: scale(1.02) translateZ(0);
   background-color: rgba(79, 70, 229, 0.03);
 }
