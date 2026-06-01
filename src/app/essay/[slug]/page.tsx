@@ -9,6 +9,31 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+function splitContent(raw: string, targetChars: number): string[] {
+  const pages: string[] = []
+  let current = ''
+  let inFence = false
+
+  const blocks = raw.split(/\n\n+/)
+
+  for (const block of blocks) {
+    const trimmed = block.trim()
+    if (trimmed.startsWith('```')) {
+      inFence = !inFence
+    }
+
+    if (!inFence && current && current.length + trimmed.length > targetChars + 200) {
+      pages.push(current.trim())
+      current = trimmed
+    } else {
+      current += (current ? '\n\n' : '') + trimmed
+    }
+  }
+
+  if (current.trim()) pages.push(current.trim())
+  return pages.length > 0 ? pages : [raw]
+}
+
 export async function generateStaticParams() {
   const posts = await getEssayPosts()
   return posts.map((post) => ({ slug: post.slug }))
@@ -31,6 +56,12 @@ export default async function EssayDetailPage({ params }: Props) {
   if (!post) notFound()
 
   const { frontmatter, content } = post
+  const rawPages = splitContent(content, 1000)
+
+  // Render each page through MDXRenderer at build time
+  const renderedPages = rawPages.map((pageContent, i) => (
+    <MDXRenderer key={i} source={pageContent} />
+  ))
 
   return (
     <BookReader
@@ -38,8 +69,7 @@ export default async function EssayDetailPage({ params }: Props) {
       date={format(parseISO(frontmatter.date), 'yyyy-MM-dd')}
       backHref="/essay/"
       backLabel="Back to Essay"
-    >
-      <MDXRenderer source={content} />
-    </BookReader>
+      pages={renderedPages}
+    />
   )
 }
