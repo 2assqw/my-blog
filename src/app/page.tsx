@@ -8,7 +8,10 @@ export default async function HomePage() {
   const recentPosts = posts.slice(0, 4)
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
+    <div className="relative overflow-hidden">
+      <div className="deco-home-blob deco-home-blob--a" />
+      <div className="deco-home-blob deco-home-blob--b" />
+      <div className="mx-auto max-w-3xl px-6 py-16 relative z-[1]">
       <section className="mb-20">
         <FadeUp>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -59,6 +62,7 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+      </div>
     </div>
   )
 }

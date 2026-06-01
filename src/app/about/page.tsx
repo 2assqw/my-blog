@@ -8,7 +8,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-article px-6 py-16">
+    <div className="relative overflow-hidden">
+      <div className="deco-about-sweep" />
+      <div className="deco-about-glow" />
+      <div className="mx-auto max-w-article px-6 py-16 relative z-[1]">
       <FadeUp>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">About</h1>
         <p className="text-gray-500 mb-10">关于我</p>
@@ -41,6 +44,7 @@ export default function AboutPage() {
             <a href="mailto:2782225993@qq.com">2782225993@qq.com</a>
           </p>
         </FadeUp>
+      </div>
       </div>
     </div>
   )

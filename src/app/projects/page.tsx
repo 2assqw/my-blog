@@ -11,7 +11,11 @@ export default async function ProjectsPage() {
   const projects = await getProjects()
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
+    <div className="relative overflow-hidden">
+      <div className="deco-projects-shape deco-projects-shape--a" />
+      <div className="deco-projects-shape deco-projects-shape--b" />
+      <div className="deco-projects-shape deco-projects-shape--c" />
+      <div className="mx-auto max-w-3xl px-6 py-16 relative z-[1]">
       <FadeUp>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Projects</h1>
         <p className="text-gray-500 mb-10">我的项目作品</p>
@@ -76,6 +80,7 @@ export default async function ProjectsPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

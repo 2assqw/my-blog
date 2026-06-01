@@ -33,7 +33,10 @@ export default async function BlogDetailPage({ params }: Props) {
   const { frontmatter, content } = post
 
   return (
-    <div className="mx-auto max-w-article px-6 py-16">
+    <div className="relative overflow-hidden">
+      <div className="deco-post-glow deco-post-glow--a" />
+      <div className="deco-post-glow deco-post-glow--b" />
+      <div className="mx-auto max-w-article px-6 py-16 relative z-[1]">
       <Link
         href="/blog"
         className="inline-flex items-center text-sm text-gray-400 hover:text-gray-600 transition-colors mb-8"
@@ -68,6 +71,7 @@ export default async function BlogDetailPage({ params }: Props) {
       <article>
         <MDXRenderer source={content} />
       </article>
+      </div>
     </div>
   )
 }
