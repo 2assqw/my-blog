@@ -116,7 +116,7 @@ export function CompanyScore({ data, companies }: Props) {
       </div>
 
       {/* Ratio comparison rows */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {RATIOS.map(r => {
           const a = ratios[0][r.key]
           const b = ratios[1]?.[r.key]
@@ -124,14 +124,14 @@ export function CompanyScore({ data, companies }: Props) {
           const bWins = a != null && b != null && (r.higherBetter ? b > a : b < a)
 
           return (
-            <div key={r.key} className="flex items-center gap-4">
-              <span className="text-xs text-gray-500 w-24 shrink-0">{r.label}</span>
-              <div className={`flex-1 text-right text-sm font-medium ${aWins ? 'text-brand' : 'text-gray-400'}`}>
+            <div key={r.key} className="flex items-center gap-2 sm:gap-4">
+              <span className="text-[11px] sm:text-xs text-gray-500 w-16 sm:w-24 shrink-0">{r.label}</span>
+              <div className={`flex-1 text-right text-xs sm:text-sm font-medium ${aWins ? 'text-brand' : 'text-gray-400'}`}>
                 {a != null ? r.fmt(a) : '—'}
-                {aWins && <span className="ml-1 text-xs">★</span>}
+                {aWins && <span className="ml-0.5 text-[10px]">★</span>}
               </div>
-              <div className={`flex-1 text-left text-sm font-medium ${bWins ? 'text-amber-600' : 'text-gray-400'}`}>
-                {bWins && <span className="mr-1 text-xs">★</span>}
+              <div className={`flex-1 text-left text-xs sm:text-sm font-medium ${bWins ? 'text-amber-600' : 'text-gray-400'}`}>
+                {bWins && <span className="mr-0.5 text-[10px]">★</span>}
                 {b != null ? r.fmt(b) : '—'}
               </div>
             </div>

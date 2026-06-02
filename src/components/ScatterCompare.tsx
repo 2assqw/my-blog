@@ -50,9 +50,9 @@ export function ScatterCompare({ data, companies }: Props) {
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
         <h3 className="text-sm font-semibold text-gray-700">散点对比</h3>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-gray-500">
           X:
           <select value={xKey} onChange={(e) => setXKey(e.target.value as typeof xKey)}
             className="rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-brand">

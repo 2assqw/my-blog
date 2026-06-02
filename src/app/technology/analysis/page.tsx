@@ -64,15 +64,15 @@ function AnalysisContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 z-10 flex items-center justify-between bg-white/80 backdrop-blur px-6 py-3 border-b border-gray-100">
-        <Link href="/technology/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors duration-200">
-          ← 返回搜索
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 bg-white/80 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 border-b border-gray-100">
+        <Link href="/technology/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors duration-200 shrink-0">
+          ← 返回
         </Link>
-        <span className="text-sm font-semibold text-gray-800">{title}</span>
+        <span className="text-xs sm:text-sm font-semibold text-gray-800 truncate max-w-[40%]">{title}</span>
         <PeriodToggle value={period} onChange={setPeriod} />
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 py-8 space-y-6">
+      <div className="mx-auto max-w-4xl px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {tickers.length === 2 && <CompanyScore data={data} companies={tickers} />}
         <ScatterCompare data={data} companies={tickers} />
 
