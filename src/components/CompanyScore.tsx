@@ -17,18 +17,31 @@ interface RatioSet {
   cashFlowRatio: number | null
 }
 
-function computeRatios(d: FinancialData): RatioSet {
-  const last = d.periods.length - 1
-  const prev = last - 1
+// Find latest non-null value scanning backward
+function latest(arr: (number | null)[]): number | null {
+  for (let i = arr.length - 1; i >= 0; i--) if (arr[i] != null) return arr[i]
+  return null
+}
+function prevVal(arr: (number | null)[]): number | null {
+  let found = false
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i] != null) {
+      if (found) return arr[i]
+      found = true
+    }
+  }
+  return null
+}
 
-  const rev = d.revenue[last]
-  const revPrev = d.revenue[prev]
-  const ni = d.netIncome[last]
-  const niPrev = d.netIncome[prev]
-  const gp = d.grossProfit[last]
-  const ta = d.totalAssets[last]
-  const tl = d.totalLiabilities[last]
-  const ocf = d.operatingCashFlow[last]
+function computeRatios(d: FinancialData): RatioSet {
+  const rev = latest(d.revenue)
+  const revPrev = prevVal(d.revenue)
+  const ni = latest(d.netIncome)
+  const niPrev = prevVal(d.netIncome)
+  const gp = latest(d.grossProfit)
+  const ta = latest(d.totalAssets)
+  const tl = latest(d.totalLiabilities)
+  const ocf = latest(d.operatingCashFlow)
 
   return {
     revenueGrowth: rev && revPrev ? ((rev - revPrev) / revPrev) * 100 : null,
