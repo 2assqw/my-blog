@@ -55,10 +55,7 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
 
   for (const filing of info.filingUrls.slice(0, period === 'annual' ? 5 : 6)) {
     try {
-      const docRes = await fetch(filing.url, {
-        headers: { 'User-Agent': '2assqw.cc dalepop828@gmail.com' },
-        mode: 'cors',
-      })
+      const docRes = await fetch(`${WORKER_BASE}/proxy?url=${encodeURIComponent(filing.url)}`)
       if (!docRes.ok) continue
       const text = await docRes.text()
       const parsed = parseIXBRL(text)
