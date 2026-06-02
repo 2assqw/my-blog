@@ -1,4 +1,4 @@
-const WORKER_BASE = 'https://api.2assqw.cc'
+const WORKER_BASE = 'https://2assqw.cc/api'
 
 export interface SearchResult {
   cik: string
