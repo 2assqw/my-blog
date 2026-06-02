@@ -1,0 +1,149 @@
+---
+title: '构建财报分析工具：从 SEC EDGAR 到可视化图表'
+date: '2026-06-01'
+tags: ['Next.js', 'Cloudflare Workers', 'Recharts', '数据可视化', 'SEC EDGAR']
+summary: '从零构建一个美股财报分析工具的全过程，涵盖 XBRL 数据解析、Cloudflare Workers 缓存策略、Recharts 图表设计，以及最终合并到个人博客的技术实践。'
+---
+
+## 项目动机
+
+在搭建完个人博客之后，我想添加一个稍微复杂的功能模块——**美股财报分析工具**。它需要从 SEC EDGAR 获取真实数据，解析后以图表形式呈现。
+
+这个需求本质上是一个**全栈数据管道**：数据获取 → 解析 → 传输 → 可视化。每一步都有工程上的取舍。
+
+## 技术选型
+
+| 层 | 选择 | 理由 |
+|---|---|---|
+| 前端 | Next.js 15 + `output: 'export'` | 与博客同栈，静态导出，部署到 Cloudflare Pages |
+| 图表 | Recharts | React 原生，支持 Scatter/Line/Bar，动画内置 |
+| 后端 | Cloudflare Workers | 免费额度够用，边缘节点部署，全球低延迟 |
+| 数据源 | SEC EDGAR API + XBRL | 官方数据，无需 API Key，覆盖全美股 |
+| 搜索 | 本地 JSON (10K+ 条 ticker) | 毫秒级过滤，零网络开销 |
+
+## 架构设计
+
+```
+浏览器                     Cloudflare Workers               SEC EDGAR
+──────                     ──────────────────               ─────────
+/technology/ →    搜索框（本地 ticker JSON 过滤，即时响应）
+                     ↓ 选择公司，点击分析
+/technology/analysis/ →  GET /search?q=AAPL          →     EDGAR Search API
+                     ←  [{cik, ticker, name}]
+                         GET /financials?cik=...      →     10-K/10-Q XBRL
+                     ←  {periods, revenue, netIncome...}
+                     ↓
+                Recharts 渲染图表
+```
+
+关键设计决策：**搜索走本地，分析走 Worker**。搜索只需公司名和 CIK 映射，一份 800KB 的 JSON 就能覆盖全部美股上市公司，放在 `public/` 下首次加载后浏览器缓存，之后的过滤完全是内存操作。
+
+## Cloudflare Workers：XBRL 解析与缓存
+
+### SEC EDGAR 数据获取
+
+Worker 需要处理两条路径：
+
+**`/search`** — 代理 SEC EDGAR 全文搜索 API，返回匹配的公司列表。只在上游搜索失败时做 fallback。
+
+**`/financials`** — 这是核心逻辑。入参是 CIK 编码和期间类型（annual/quarter），Worker 做三件事：
+
+1. 调 `data.sec.gov/submissions/CIK{cik}.json` 获取公司所有 filing 索引
+2. 筛选 10-K（年报）或 10-Q（季报），提取 accession number
+3. 对每个 filing，下载对应的 XBRL 实例文档并解析
+
+### XBRL 解析策略
+
+SEC 上市公司以 Inline XBRL（iXBRL）格式提交财报——数据嵌入在 HTML 中，用 `<ix:nonFraction>` 标签标注数值。解析的核心是**标签映射**：
+
+```ts
+const CONCEPT_MAP = {
+  'us-gaap:Revenues':          { key: 'revenue',        label: 'Revenue' },
+  'us-gaap:NetIncomeLoss':     { key: 'netIncome',      label: 'Net Income' },
+  'us-gaap:Assets':            { key: 'totalAssets',    label: 'Total Assets' },
+  'us-gaap:Liabilities':       { key: 'totalLiabilities', label: 'Total Liabilities' },
+  // ... 共 6 个核心指标
+}
+```
+
+XBRL 的数据值通过 `contextRef` 关联到日期上下文（instant 或 duration），解析后按 fiscal period 对齐成平行数组。
+
+### 性能优化
+
+初始版本逐 filing 串行下载，6 个年报文件耗时 6-12 秒。改为**批量并发**（每批 3 个 `Promise.all`），降至 2-4 秒。
+
+第二次优化是用 **Cloudflare Cache API** 做响应缓存：
+
+```ts
+const cache = caches.default
+const cached = await cache.match(request)
+if (cached) return cached  // 命中缓存，毫秒级返回
+
+// ... 获取并解析数据 ...
+
+// 年度数据缓存 24h，季度 6h
+response.headers.set('Cache-Control', `public, max-age=${period === 'annual' ? 86400 : 21600}`)
+await cache.put(request, response.clone())
+```
+
+同一家公司的财报第一次慢，之后命中 CDN 边缘缓存，**响应降至 50ms 以内**。
+
+### CORS 问题
+
+Cloudflare Pages（`pages.dev`）到 Workers（`workers.dev`）属于跨域请求。浏览器会先发 OPTIONS 预检，Worker 没有返回 `Access-Control-Allow-Origin` 头就会直接被拦截。解决方案是在 Worker 中统一注入 CORS 头并处理预检：
+
+```ts
+function cors(response: Response): Response {
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  return response
+}
+
+// 在 fetch handler 中
+if (request.method === 'OPTIONS') {
+  return cors(new Response(null, { status: 204 }))
+}
+```
+
+## 前端：从搜索到图表
+
+### 本地 ticker 搜索
+
+SEC 提供的 `company_tickers.json` 包含约 10,000 家上市公司。前端在 `useEffect` 中 fetch 这个文件一次，之后用户输入在内存中 filter。
+
+排序策略：**ticker 前缀匹配优先，公司名包含匹配其次**。输入 "AA" → 先返回 AA、AAL、AAPL，再返回 "Alphabet Inc." 等。
+
+### 图表设计
+
+<Callout type="tip">
+  图表组件全部使用 Recharts，数据从 Worker 获取后传入 `FinancialData[]` 类型。
+</Callout>
+
+分析页包含两类视图：
+
+**散点对比图** — 位于最顶部，作为核心对比视图。X/Y 轴各一个下拉框，从 6 个指标中选取。同公司看历年趋势（点数连成轨迹），跨公司看规模差异（不同颜色区分）。默认配置：X=收入，Y=净利润。
+
+**折线趋势图** — 6 个独立图表，分别展示收入、净利润、总资产、总负债、经营现金流、毛利润的跨期变化。支持年度/季度切换，动画过渡 400ms。
+
+## 部署与合并
+
+Worker 部署在 `earnings-eye-worker.xxx.workers.dev`，前端部署在 `my-blog-xxx.pages.dev`。
+
+最终将 earnings-eye 的组件（SearchBox、ScatterCompare、MetricChart 等）移入 my-blog 项目，注册 `/technology` 路由，统一域名访问。合并时需要注意 my-blog 使用 Tailwind v3 的 `tailwind.config.ts` 配置，组件中的 `indigo-*` 类直接映射到项目的 `brand` 色板即可。
+
+## 踩坑记录
+
+1. **`workers.dev` 在中国大陆被墙**。Worker 本身功能完全正常，但域名不可达。唯一解决方案是绑自定义域名。这一点和 `pages.dev` 的情况完全一致。
+
+2. **Inline XBRL 的上下文解析**。SEC 的 XBRL 上下文有两种：instant（时点，如资产负债表日）和 duration（时段，如利润表期间）。正则需要分别处理，否则会丢失部分数据。
+
+3. **Recharts 的 Tooltip formatter 类型**。Recharts v3 的 `TooltipFormatter` 参数类型是 `ValueType | undefined` 而非 `number`，直接做数值运算会触发 TypeScript 报错，需要 `typeof` 运行时检查。
+
+4. **Next.js 构建阶段会把 worker/ 目录也做 TS 检查**。项目根目录的 `tsconfig.json` 的 `include: ["**/*.ts"]` 会匹配 Worker 代码，而 Worker 的 `caches.default` 等 Cloudflare 特有 API 在 DOM 类型环境下不存在。需要在 `exclude` 中显式排除 `worker` 目录。
+
+## 后续方向
+
+- **Worker 日志与监控**：接入 Cloudflare Analytics 查看调用量和错误率
+- **财务报表对比模式**：不止年份趋势，同时展示同行业多家公司的横向对比
+- **移动端适配**：图表在小屏幕上目前显示效果欠佳
+
+完整的项目代码在 GitHub 上开源：[github.com/2assqw/my-blog](https://github.com/2assqw/my-blog)。
