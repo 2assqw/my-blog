@@ -82,53 +82,33 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
   }
   const periods = Array.from(allPeriods).sort().slice(-10) // Last 10 periods
 
-  // Align data
-  const result: FinancialData = {
+  // Build aligned arrays — pick best filing for each period
+  const keys: MetricKey[] = ['revenue', 'netIncome', 'totalAssets', 'totalLiabilities', 'operatingCashFlow', 'grossProfit']
+  const aligned: Record<MetricKey, (number | null)[]> = {
+    revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [],
+  }
+
+  for (const period of periods) {
+    for (const k of keys) {
+      let value: number | null = null
+      // Find first filing that has this period and metric
+      for (const d of unique) {
+        const idx = d.data.periods.indexOf(period)
+        if (idx >= 0 && d.data[k][idx] != null) {
+          value = d.data[k][idx]
+          break
+        }
+      }
+      aligned[k].push(value)
+    }
+  }
+
+  return {
     company: info.company,
     ticker: info.ticker,
     periods,
-    revenue: [],
-    netIncome: [],
-    totalAssets: [],
-    totalLiabilities: [],
-    operatingCashFlow: [],
-    grossProfit: [],
+    ...aligned,
   }
-
-  for (const period of periods) {
-    for (const d of unique) {
-      const idx = d.data.periods.indexOf(period)
-      if (idx >= 0) {
-        for (const key of Object.keys(CONCEPT_MAP) as (keyof typeof CONCEPT_MAP)[]) {
-          const k = CONCEPT_MAP[key]
-          if (d.data[k][idx] != null && result[k].length < periods.length) {
-            // Only set if not already set (first matching filing wins)
-          }
-        }
-      }
-    }
-  }
-
-  // Build aligned arrays from the best-matching filing for each period
-  for (const period of periods) {
-    for (const key of ['revenue', 'netIncome', 'totalAssets', 'totalLiabilities', 'operatingCashFlow', 'grossProfit'] as MetricKey[]) {
-      let found = false
-      for (const d of unique) {
-        const idx = d.data.periods.indexOf(period)
-        if (idx >= 0 && d.data[key][idx] != null && !found) {
-          if (!result[key]) result[key] = []
-          result[key].push(d.data[key][idx])
-          found = true
-        }
-      }
-      if (!found) {
-        if (!result[key]) result[key] = []
-        result[key].push(null)
-      }
-    }
-  }
-
-  return result
 }
 
 // ---- Inline XBRL parser (client-side) ----
