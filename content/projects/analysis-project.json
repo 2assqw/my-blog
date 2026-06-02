@@ -1,10 +1,10 @@
 {
-  "name": "Financial report analysis",
+  "name": "Earnings Eye",
   "description": "使用AI辅助构建财报分析工具，支持多种财务指标的计算和可视化展示。",
   "tags": ["Vibe coding"],
   "links": {
     "live": "https://example.com",
-    "github": "https://github.com/2assqw/financial-report-analysis"
+    "github": "https://github.com/2assqw/earnings-eye"
   },
   "image": ""
 }
