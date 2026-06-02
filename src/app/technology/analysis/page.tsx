@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { fetchFinancials, type FinancialData } from '@/lib/finance-api'
 import { ScatterCompare } from '@/components/ScatterCompare'
+import { CompanyScore } from '@/components/CompanyScore'
 import { MetricChart } from '@/components/MetricChart'
 import { PeriodToggle } from '@/components/PeriodToggle'
 
@@ -72,6 +73,7 @@ function AnalysisContent() {
       </div>
 
       <div className="mx-auto max-w-4xl px-6 py-8 space-y-6">
+        {tickers.length === 2 && <CompanyScore data={data} companies={tickers} />}
         <ScatterCompare data={data} companies={tickers} />
 
         <MetricChart title="收入 (Revenue)" data={data} metricKey="revenue" companies={tickers} />
