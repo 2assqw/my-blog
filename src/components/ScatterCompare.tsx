@@ -24,13 +24,21 @@ export function ScatterCompare({ data, companies }: Props) {
   const [xKey, setXKey] = useState<typeof METRICS[0]['key']>('revenue')
   const [yKey, setYKey] = useState<typeof METRICS[0]['key']>('netIncome')
 
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+  function fmtPeriod(p: string): string {
+    const d = new Date(p + 'T00:00:00')
+    if (isNaN(d.getTime())) return p
+    return `${MONTHS[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`
+  }
+
   const scatterData = data.map((d, di) => ({
     name: companies[di],
     data: d.periods
       .map((period, i) => ({
         x: d[xKey]?.[i] ?? 0,
         y: d[yKey]?.[i] ?? 0,
-        period,
+        period: fmtPeriod(period),
       }))
       .filter((p) => p.x !== 0 || p.y !== 0),
     fill: COLORS[di],

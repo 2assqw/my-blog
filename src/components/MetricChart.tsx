@@ -17,8 +17,19 @@ export function MetricChart({ title, data, metricKey, companies }: Props) {
   data.forEach((d) => d.periods.forEach((p) => allPeriods.add(p)))
   const periods = Array.from(allPeriods).sort()
 
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+  function fmtFiscal(period: string): string {
+    // period is "YYYY-MM-DD"
+    const d = new Date(period + 'T00:00:00')
+    if (isNaN(d.getTime())) return period.slice(0, 7)
+    const m = MONTHS[d.getMonth()]
+    const y = String(d.getFullYear()).slice(2)
+    return `${m} '${y}`
+  }
+
   const chartData = periods.map((period) => {
-    const row: Record<string, string | number | null> = { period: period.slice(0, 7) }
+    const row: Record<string, string | number | null> = { period: fmtFiscal(period) }
     data.forEach((d, di) => {
       const idx = d.periods.indexOf(period)
       row[companies[di]] = idx >= 0 ? d[metricKey]?.[idx] ?? null : null
