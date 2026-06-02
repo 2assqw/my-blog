@@ -1,4 +1,4 @@
-const WORKER_BASE = 'https://earnings-eye-worker.dp4by5tp89.workers.dev'
+const WORKER_BASE = 'https://api.2assqw.cc'
 
 export interface SearchResult {
   cik: string
