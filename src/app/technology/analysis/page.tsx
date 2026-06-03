@@ -11,6 +11,7 @@ import { PeriodToggle } from '@/components/PeriodToggle'
 import { runEngine } from '@/lib/finscope-engine'
 import { computeScores, INDICATORS, IndicatorCategory } from '@/lib/finscope-indicators'
 import { analyzePatterns } from '@/lib/finscope-patterns'
+import { analyzeSentiment, extractMDAText, analyzeTrend, type SentimentScore } from '@/lib/finscope-sentiment'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -218,6 +219,7 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
         <div key={i} className="space-y-4">
           <IndicatorDashboard data={d} company={companies[i]} />
           <PatternDashboard data={d} company={companies[i]} />
+          <SentimentCard symbol={companies[i]} periods={d.periods} />
         </div>
       ))}
       <ScatterCompare data={data} companies={companies} />
@@ -656,6 +658,84 @@ function PatternDashboard({ data, company }: { data: FinancialData; company: str
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SentimentCard({ symbol, periods }: { symbol: string; periods: string[] }) {
+  const [scores, setScores] = useState<SentimentScore[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!symbol) return
+    setLoading(true)
+    // Fetch latest filing via proxy and analyze sentiment
+    const cik = periods.length > 0 ? undefined : undefined // We need filing URLs from Worker
+
+    // For now: analyze the MD&A from the most recent 10-K/10-Q filings
+    // Get filing URLs from the financials endpoint
+    fetch(`/api/financials?cik=&period=annual&ticker=${symbol}`).then(r => r.json()).then(async info => {
+      if (!info.filingUrls?.length) { setLoading(false); return }
+
+      const results: SentimentScore[] = []
+      for (const f of info.filingUrls.slice(0, 6)) {
+        try {
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(f.url)}`
+          const res = await fetch(proxyUrl)
+          const html = await res.text()
+          const text = extractMDAText(html)
+          if (text.length > 100) {
+            results.push(analyzeSentiment(text, f.reportDate.slice(0, 7)))
+          }
+        } catch { /* skip */ }
+      }
+      setScores(results)
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [symbol])
+
+  const trend = analyzeTrend(scores)
+
+  if (loading) return <div className="rounded-xl border border-gray-100 bg-white p-4 dark:bg-gray-900 dark:border-gray-800"><div className="h-4 w-32 bg-gray-100 animate-pulse rounded" /></div>
+  if (!scores.length) return null
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">管理层情绪</h3>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          trend.trend === 'improving' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+          trend.trend === 'declining' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+          trend.trend === 'volatile' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+          'bg-gray-100 text-gray-600'
+        }`}>
+          趋势 {trend.trend === 'improving' ? '改善中' : trend.trend === 'declining' ? '下降中' : trend.trend === 'volatile' ? '波动' : '稳定'}
+        </span>
+      </div>
+
+      {/* Sentiment bar */}
+      <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden flex">
+        <div className="h-full bg-green-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, 50 + trend.latestComposite / 2))}%` }} />
+        <div className="h-full bg-red-300" style={{ width: `${Math.max(0, Math.min(100, 50 - trend.latestComposite / 2))}%` }} />
+      </div>
+      <div className="flex justify-between text-[10px] text-gray-400">
+        <span>悲观</span>
+        <span>复合情绪 {trend.latestComposite > 0 ? '+' : ''}{trend.latestComposite}</span>
+        <span>乐观</span>
+      </div>
+
+      {/* Latest filing details */}
+      {scores[0] && (
+        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <p>最新分析 ({scores[0].period})，基于 {scores[0].wordCount} 词</p>
+          <div className="flex gap-4">
+            <span className="text-green-600 dark:text-green-400">乐观词 {scores[0].optimistic}</span>
+            <span className="text-red-500 dark:text-red-400">谨慎词 {scores[0].cautious}</span>
+            <span>前瞻性 {scores[0].forwardLooking}</span>
+            <span>不确定性 {scores[0].uncertainty}</span>
+          </div>
         </div>
       )}
     </div>
