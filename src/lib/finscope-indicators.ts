@@ -245,7 +245,7 @@ export const INDICATORS: Indicator[] = [
     description: '总负债 / (总资产 - 总负债)',
     compute: d => {
       const ta = last(d.totalAssets), tl = last(d.totalLiabilities)
-      return ta && ta > tl ? (tl / (ta - tl)) * 100 : null
+      return ta && tl && ta > tl ? (tl / (ta - tl)) * 100 : null
     },
     normalize: v => Math.max(0, 100 - v * 0.5),
   },
