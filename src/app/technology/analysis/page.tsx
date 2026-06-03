@@ -8,7 +8,7 @@ import { CompanyScore } from '@/components/CompanyScore'
 import { ScatterCompare } from '@/components/ScatterCompare'
 import { MetricChart } from '@/components/MetricChart'
 import { PeriodToggle } from '@/components/PeriodToggle'
-import { analyze } from '@/lib/algorithmic-summary'
+import { runEngine } from '@/lib/finscope-engine'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -372,56 +372,120 @@ function InsiderCard({ cik }: { cik: string }) {
 }
 
 function AlgorithmicSummary({ data, company }: { data: FinancialData; company: string }) {
-  const summary = analyze(data)
-  const { risks, anomalies, totalRiskScore, summaryText, quartersAnalyzed } = summary
+  const engine = runEngine(data, company)
+  const { risk, correlations, patterns, predictions, quartersAnalyzed } = engine
 
-  const riskColor = (l: string) => l === 'critical' ? 'text-red-600 bg-red-50 dark:bg-red-900 dark:text-red-300' : l === 'high' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900 dark:text-orange-300' : 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900 dark:text-yellow-300'
+  const preds = Object.entries(predictions).filter(([, v]) => v.predicted != null)
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          算法分析 · {company} ({quartersAnalyzed} 季度)
+          FinScope 引擎 · {company} ({quartersAnalyzed} 季度)
         </h3>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${totalRiskScore >= 50 ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : totalRiskScore >= 25 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'}`}>
-          风险评分 {totalRiskScore}/100
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          risk.totalScore >= 50 ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+          risk.totalScore >= 25 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+          'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+        }`}>
+          风险 {risk.totalScore}/100
         </span>
       </div>
 
-      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{summaryText}</p>
-
-      {anomalies.length > 0 && (
+      {/* Predictions */}
+      {preds.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">异常检测</h4>
-          <div className="space-y-1">
-            {anomalies.map((a, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                <span className={`shrink-0 px-1 py-0.5 rounded font-medium ${a.severity === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'}`}>
-                  {a.severity === 'critical' ? '严重' : '警告'}
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">{a.description} (偏差 {a.deviation})</span>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">MWE 加权预测</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {preds.map(([label, v]) => (
+              <div key={label} className="rounded-lg border border-gray-100 dark:border-gray-800 p-2 text-center">
+                <p className="text-[10px] text-gray-400">{label}</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                  {v.predicted! >= 1e9 ? `${(v.predicted!/1e9).toFixed(1)}B` : `${(v.predicted!/1e6).toFixed(1)}M`}
+                </p>
+                <div className="flex justify-center gap-1 mt-0.5">
+                  <span className="text-[9px] text-gray-400">置信度 {Math.round(v.confidence * 100)}%</span>
+                  <span className={`text-[9px] ${v.trendStrength > 0.3 ? 'text-green-600' : v.trendStrength < -0.3 ? 'text-red-500' : 'text-gray-400'}`}>
+                    {v.trendStrength > 0.3 ? '↑' : v.trendStrength < -0.3 ? '↓' : '→'}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div>
-        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">风险评估</h4>
-        <div className="grid grid-cols-2 gap-2">
-          {risks.map((r, i) => (
-            <div key={i} className={`rounded-lg p-3 ${riskColor(r.level)} bg-opacity-30`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold">{r.category}</span>
-                <span className="text-[10px] opacity-70">{r.score}/25</span>
+      {/* Patterns */}
+      {patterns.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">形态识别</h4>
+          <div className="space-y-1">
+            {patterns.map((p, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                  p.pattern === 'acceleration' || p.pattern === 'steady-growth' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                  p.pattern === 'V-recovery' || p.pattern === 'J-curve' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                  p.pattern === 'L-stagnation' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+                  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                }`}>
+                  {p.pattern}
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">{p.description}</span>
               </div>
-              <p className="text-[10px] leading-relaxed opacity-80">{r.detail}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cross-metric correlations */}
+      {correlations.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">跨指标关联</h4>
+          <div className="space-y-1">
+            {correlations.filter(c => c.interpretation && c.interpretation.length > 4).slice(0, 4).map((c, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className={`shrink-0 px-1 py-0.5 rounded text-[10px] font-medium ${
+                  c.significance === 'strong' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
+                  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                }`}>
+                  r={c.correlation}
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">{c.interpretation}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Risk breakdown */}
+      <div>
+        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">风险分解</h4>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[
+            { label: '波动', score: risk.volatilityScore, max: 30 },
+            { label: '动量', score: risk.momentumScore, max: 30 },
+            { label: '关联', score: risk.correlationScore, max: 20 },
+            { label: '形态', score: risk.patternScore, max: 20 },
+          ].map(r => (
+            <div key={r.label} className="text-center">
+              <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-0.5">
+                <div className={`h-full rounded-full ${r.score > r.max * 0.7 ? 'bg-red-500' : r.score > r.max * 0.4 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${(r.score / r.max) * 100}%` }} />
+              </div>
+              <span className="text-[9px] text-gray-400">{r.label} {r.score}</span>
             </div>
           ))}
         </div>
+        {risk.breakdown.length > 0 && (
+          <div className="mt-2 space-y-0.5">
+            {risk.breakdown.slice(0, 3).map((b, i) => (
+              <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400">⚠ {b}</p>
+            ))}
+          </div>
+        )}
       </div>
 
-      <p className="text-[10px] text-gray-400 text-center">算法分析基于纯数学统计（Z-score、IQR、线性回归），非 AI 生成</p>
+      <p className="text-[10px] text-gray-400 text-center">FinScope Adaptive Analytics Engine — MWE · 波动率自适应 · 跨指标关联矩阵</p>
     </div>
   )
 }
