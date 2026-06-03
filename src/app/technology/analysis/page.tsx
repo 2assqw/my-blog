@@ -180,6 +180,7 @@ function OverviewTab({ data, companies, symbol, cik }: { data: FinancialData[]; 
       </div>
 
       <InsiderCard cik={cik} />
+      <EventsCard cik={cik} />
 
       {news.length > 0 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
@@ -347,6 +348,35 @@ function RatingsTab({ symbol }: { symbol: string }) {
         </div>
       </div>
       {d.targetMean != null && <Card label="平均目标价" value={`$${d.targetMean}`} src="Yahoo" />}
+    </div>
+  )
+}
+
+function EventsCard({ cik }: { cik: string }) {
+  const [items, setItems] = useState<Array<{ type: string; date: string; description: string; form: string }>>([])
+  useEffect(() => {
+    if (!cik) return
+    fetch(`/api/events?cik=${cik}`).then(r => r.json()).then(d => setItems(d.items || []))
+  }, [cik])
+  if (!items.length) return null
+
+  const icons: Record<string, string> = { earnings: '📅', filing: '📄', '10-K': '📊', '10-Q': '📋', '8-K': '⚠️', '4': '👤' }
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 dark:bg-gray-900 dark:border-gray-800">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">近期动向</h3>
+      <div className="space-y-1.5 max-h-64 overflow-y-auto">
+        {items.map((it, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs">
+            <span className="w-5 text-center">{icons[it.form] || icons[it.type] || '·'}</span>
+            <span className="text-gray-400 w-20 shrink-0">{it.date}</span>
+            <span className={`font-medium ${it.type === 'earnings' ? 'text-brand dark:text-brand-400' : 'text-gray-600 dark:text-gray-400'}`}>
+              {it.form === '10-K' ? '年报' : it.form === '10-Q' ? '季报' : it.form === '8-K' ? '重大事项' : it.form === '4' ? '内部人交易' : it.type === 'earnings' ? '财报预计' : it.form}
+            </span>
+            <span className="text-gray-400 truncate hidden sm:inline">{it.description}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
