@@ -9,6 +9,7 @@ import { ScatterCompare } from '@/components/ScatterCompare'
 import { MetricChart } from '@/components/MetricChart'
 import { PeriodToggle } from '@/components/PeriodToggle'
 import { runEngine } from '@/lib/finscope-engine'
+import { computeScores, INDICATORS, IndicatorCategory } from '@/lib/finscope-indicators'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -212,7 +213,9 @@ function Card({ label, value, src }: { label: string; value: string; src: string
 function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: string[] }) {
   return (
     <div className="space-y-4 sm:space-y-6">
-      {companies.length === 2 && <CompanyScore data={data} companies={companies} />}
+      {data.map((d, i) => (
+        <IndicatorDashboard key={i} data={d} company={companies[i]} />
+      ))}
       <ScatterCompare data={data} companies={companies} />
       <MetricChart title="收入" data={data} metricKey="revenue" companies={companies} />
       <MetricChart title="净利润" data={data} metricKey="netIncome" companies={companies} />
@@ -530,6 +533,61 @@ function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; co
       </div>
 
       <p className="text-[10px] text-gray-400 text-center">FinScope Adaptive Analytics Engine — MWE · 波动率自适应 · 跨指标关联矩阵</p>
+    </div>
+  )
+}
+
+function IndicatorDashboard({ data, company }: { data: FinancialData; company: string }) {
+  const { categoryScores, totalScore, indicatorCount } = computeScores(data)
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          指标体系 · {company} ({indicatorCount} 项)
+        </h3>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          totalScore >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+          totalScore >= 50 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+          'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+        }`}>
+          综合评分 {totalScore}/100
+        </span>
+      </div>
+
+      {/* Category score bars */}
+      <div className="space-y-2">
+        {categoryScores.map(cat => (
+          <div key={cat.category}>
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-gray-500 dark:text-gray-500">{cat.name}</span>
+              <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">{cat.score}/100</span>
+            </div>
+            <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  cat.score >= 70 ? 'bg-green-500' : cat.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${cat.score}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Top & bottom indicators */}
+      <div className="grid grid-cols-2 gap-1 text-[10px]">
+        {categoryScores.map(cat => {
+          const sorted = [...cat.indicators].filter(s => s.value != null).sort((a, b) => b.score - a.score)
+          const best = sorted[0], worst = sorted[sorted.length - 1]
+          return (
+            <div key={cat.category} className="text-gray-500 dark:text-gray-500">
+              <p>↑ {best?.name || '—'} <span className="text-green-600">{best?.value?.toFixed(1)}{best?.id.includes('p0') || best?.id.includes('g0') ? '%' : ''}</span></p>
+              <p>↓ {worst?.name || '—'} <span className="text-red-500">{worst?.value?.toFixed(1)}{worst?.id.includes('p0') || worst?.id.includes('g0') ? '%' : ''}</span></p>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
