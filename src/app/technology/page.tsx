@@ -29,7 +29,7 @@ export default function TechnologyPage() {
     <main className="flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 py-12 sm:py-20">
       <div className="w-full max-w-lg">
         <h1 className="text-center text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
-          Earnings Eye
+          FinScope
         </h1>
         <p className="text-center text-sm sm:text-base text-gray-500 mb-8 sm:mb-10">
           基于 SEC EDGAR 数据的上市公司财报可视化分析
