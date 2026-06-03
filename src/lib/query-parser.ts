@@ -143,8 +143,9 @@ export function computeMetrics(d: { periods: string[]; revenue: (number | null)[
 
 export function matchesFilters(metrics: CompanyMetrics, filters: FilterClause[]): boolean {
   for (const f of filters) {
-    const val = metrics[f.metric]
-    if (val == null) return false
+    const raw = metrics[f.metric]
+    if (raw == null || typeof raw !== 'number') return false
+    const val = raw as number
     if (f.op === 'gt' && val <= f.value) return false
     if (f.op === 'lt' && val >= f.value) return false
     if (f.op === 'gte' && val < f.value) return false
