@@ -7,30 +7,26 @@
     @apply bg-gray-50 text-gray-800 antialiased transition-colors duration-500;
   }
 
-  /* Dark mode */
-  .dark body { @apply bg-gray-950 text-gray-200; }
-  .dark .bg-white { @apply bg-gray-900; }
-  .dark .bg-gray-50 { @apply bg-gray-950; }
-  .dark .bg-gray-100 { @apply bg-gray-800; }
-  .dark .border-gray-100 { @apply border-gray-800; }
-  .dark .border-gray-200 { @apply border-gray-700; }
-  .dark .text-gray-800 { @apply text-gray-200; }
-  .dark .text-gray-900 { @apply text-gray-100; }
-  .dark .text-gray-700 { @apply text-gray-300; }
-  .dark .text-gray-500 { @apply text-gray-400; }
-  .dark .text-gray-400 { @apply text-gray-500; }
-  .dark .shadow-sm { @apply shadow-gray-900/30; }
-  .dark .hover\:bg-gray-50:hover { @apply hover:bg-gray-800; }
-  .dark .hover\:bg-gray-100:hover { @apply hover:bg-gray-800; }
-  .dark .hover\:bg-gray-200:hover { @apply hover:bg-gray-700; }
-  .dark .hover\:text-gray-700:hover { @apply hover:text-gray-200; }
-  .dark .hover\:text-gray-900:hover { @apply hover:text-gray-100; }
-  .dark .hover\:text-gray-600:hover { @apply hover:text-gray-300; }
-  .dark .prose { @apply text-gray-300; }
-  .dark .prose h1, .dark .prose h2, .dark .prose h3 { @apply text-gray-100; }
-  .dark .book-card { @apply bg-gray-900 shadow-gray-900/30; }
-  .dark .book-reader { @apply bg-gray-950; }
-  .dark .book-topbar, .dark .book-bottombar { @apply border-gray-800; }
+  /* Dark mode — use direct CSS, not @apply (avoids Tailwind circular deps) */
+  .dark body { background: #030712; color: #e5e7eb; }
+  .dark .bg-white,
+  .dark .bg-gray-50 { background: #030712; }
+  .dark .bg-gray-100 { background: #1f2937; }
+  .dark .book-card { background: #111827; }
+  .dark .book-reader { background: #030712; }
+  .dark .border-gray-100,
+  .dark .book-topbar,
+  .dark .book-bottombar { border-color: #1f2937; }
+  .dark .border-gray-200 { border-color: #374151; }
+  .dark .text-gray-800,
+  .dark .text-gray-900,
+  .dark .prose h1,
+  .dark .prose h2,
+  .dark .prose h3 { color: #f3f4f6; }
+  .dark .text-gray-700,
+  .dark .prose { color: #d1d5db; }
+  .dark .text-gray-500 { color: #9ca3af; }
+  .dark .text-gray-400 { color: #6b7280; }
 
   /* Global paper noise texture — SVG feTurbulence, barely visible */
   body::before {
