@@ -422,8 +422,8 @@ export const INDICATORS: Indicator[] = [
     id: 'm03', name: '利润转折信号', category: IndicatorCategory.Momentum,
     description: '最近 1 季度利润 / 前 4 季度平均利润 (检测拐点)',
     compute: d => {
-      const last = last(d.netIncome), avg = sum(d.netIncome.slice(0, -1), 4) / 4
-      return last && avg && avg > 0 ? (last / avg - 1) * 100 : null
+      const latestNI = last(d.netIncome), avg = sum(d.netIncome.slice(0, -1), 4) / 4
+      return latestNI && avg && avg > 0 ? (latestNI / avg - 1) * 100 : null
     },
     normalize: v => Math.min(100, Math.max(0, 50 + v * 2)),
   },
@@ -431,10 +431,10 @@ export const INDICATORS: Indicator[] = [
     id: 'm04', name: '现金流转折', category: IndicatorCategory.Momentum,
     description: '最近 1 季度现金流 / 前 4 季度均值',
     compute: d => {
-      const last = last(d.operatingCashFlow)
+      const latestOCF = last(d.operatingCashFlow)
       const prev = d.operatingCashFlow.filter(v => v != null) as number[]
       const prevAvg = prev.length > 1 ? prev.slice(-5, -1).reduce((a, b) => a + b, 0) / Math.min(4, prev.length - 1) : 0
-      return prevAvg > 0 ? (last! / prevAvg - 1) * 100 : null
+      return prevAvg > 0 ? (latestOCF! / prevAvg - 1) * 100 : null
     },
     normalize: v => Math.min(100, Math.max(0, 50 + v * 3)),
   },
