@@ -120,11 +120,11 @@ function AnalysisContent() {
 
 function SourceFooter({ tab }: { tab: Tab }) {
   const sources: Record<Tab, string> = {
-    overview: 'Finnhub · SEC EDGAR',
+    overview: 'Yahoo Finance · SEC EDGAR',
     financials: 'SEC EDGAR · 数据来自公司 10-K/10-Q 原始申报',
-    market: 'Finnhub · 数据延迟最多 15 分钟',
-    news: 'Finnhub · 新闻来自第三方媒体聚合',
-    ratings: 'Finnhub · 评级数据来自各券商分析师',
+    market: 'Yahoo Finance · 行情延迟 15 分钟',
+    news: 'Yahoo Finance · 新闻来自第三方媒体聚合',
+    ratings: 'Yahoo Finance · 评级数据来自各券商分析师',
   }
   return (
     <div className="mt-8 pt-4 border-t border-gray-100 text-center text-[10px] sm:text-xs text-gray-400">
@@ -154,8 +154,11 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
   )
 }
 
+interface YahooMarket { price: number | null; change: number | null; changePct: number | null; dayHigh: number | null; dayLow: number | null; prevClose: number | null; candles: { close: number[]; timestamp: number[] } | null }
+interface YahooNews { items?: Array<{ headline: string; summary: string; source: string; url: string; datetime: number }> }
+
 function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; companies: string[]; symbol: string }) {
-  const [market, setMarket] = useState<{ quote?: { c: number; dp?: number }; metrics?: { pe?: number; marketCap?: number } } | null>(null)
+  const [market, setMarket] = useState<YahooMarket | null>(null)
   const [news, setNews] = useState<Array<{ headline: string; datetime: number; url: string }>>([])
   const [loading, setLoading] = useState(true)
 
@@ -171,27 +174,22 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
     }).finally(() => setLoading(false))
   }, [symbol])
 
-  const fmtB = (v: number) => v >= 1e12 ? (v / 1e12).toFixed(2) + 'T' : v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : String(v)
-
   return (
     <div className="space-y-6">
-      {/* Key metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <MetricCard label="股价" value={market?.quote ? `$${market.quote.c}` : '—'} source="F" loading={loading} />
-        <MetricCard label="涨跌" value={market?.quote?.dp != null ? `${market.quote.dp.toFixed(2)}%` : '—'} source="F" loading={loading} trend={market?.quote?.dp != null ? (market.quote.dp >= 0 ? 'up' : 'down') : undefined} />
-        <MetricCard label="P/E" value={market?.metrics?.pe != null ? `${market.metrics.pe.toFixed(1)}x` : '—'} source="F" loading={loading} />
-        <MetricCard label="市值" value={market?.metrics?.marketCap ? `$${fmtB(market.metrics.marketCap)}` : '—'} source="F" loading={loading} />
+        <MetricCard label="股价" value={market?.price ? `$${market.price}` : '—'} source="Y" loading={loading} />
+        <MetricCard label="涨跌" value={market?.changePct != null ? `${(market.changePct * 100).toFixed(2)}%` : '—'} source="Y" loading={loading} trend={market?.changePct != null ? (market.changePct >= 0 ? 'up' : 'down') : undefined} />
+        <MetricCard label="日内高" value={market?.dayHigh ? `$${market.dayHigh}` : '—'} source="Y" loading={loading} />
+        <MetricCard label="日内低" value={market?.dayLow ? `$${market.dayLow}` : '—'} source="Y" loading={loading} />
       </div>
 
-      {/* Sparkline placeholder */}
-      {market?.quote && (
+      {market?.price && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
           <p className="text-xs text-gray-400 mb-2">最新行情</p>
-          <p className="text-2xl font-bold">${market.quote.c} <span className={`text-sm font-medium ${(market.quote.dp ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>{(market.quote.dp ?? 0) >= 0 ? '+' : ''}{market.quote.dp?.toFixed(2) ?? '—'}%</span></p>
+          <p className="text-2xl font-bold">${market.price} <span className={`text-sm font-medium ${(market.changePct ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>{(market.changePct ?? 0) >= 0 ? '+' : ''}{(market.changePct ?? 0 * 100).toFixed(2)}%</span></p>
         </div>
       )}
 
-      {/* Latest news */}
       {news.length > 0 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">最新动态</h3>
@@ -206,13 +204,13 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
         </div>
       )}
 
-      {!loading && !market && !news.length && <EmptyState source="Finnhub" />}
+      {!loading && !market && !news.length && <EmptyState source="Yahoo Finance" />}
     </div>
   )
 }
 
 function MarketTab({ symbol }: { symbol: string }) {
-  const [data, setData] = useState<{ quote?: { c: number }; metrics?: Record<string, number | null>; candles?: { close: number[]; timestamp: number[] } } | null>(null)
+  const [data, setData] = useState<YahooMarket | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -227,20 +225,16 @@ function MarketTab({ symbol }: { symbol: string }) {
   }, [symbol])
 
   if (loading) return <Skeleton />
-  if (error) return <ErrorBlock source="Finnhub" onRetry={() => window.location.reload()} />
-  if (!data?.quote) return <EmptyState source="Finnhub" />
+  if (error) return <ErrorBlock source="Yahoo Finance" onRetry={() => window.location.reload()} />
+  if (!data?.price) return <EmptyState source="Yahoo Finance" />
 
-  // Build mini chart from candles
   const closes = data.candles?.close || []
   const maxV = Math.max(...closes, 1)
   const minV = Math.min(...closes, maxV * 0.9)
   const range = maxV - minV || 1
 
-  const fmtMkt = (v: number) => v >= 1e12 ? (v / 1e12).toFixed(1) + 'T' : v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : String(v)
-
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Mini chart SVG */}
       {closes.length > 5 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">近 6 个月走势</h3>
@@ -255,14 +249,12 @@ function MarketTab({ symbol }: { symbol: string }) {
         </div>
       )}
 
-      {/* Valuation cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        {data.metrics?.pe != null && <MetricCard label="P/E" value={`${data.metrics.pe.toFixed(1)}x`} source="F" />}
-        {data.metrics?.pb != null && <MetricCard label="P/B" value={`${data.metrics.pb.toFixed(2)}x`} source="F" />}
-        {data.metrics?.ps != null && <MetricCard label="P/S" value={`${data.metrics.ps.toFixed(2)}x`} source="F" />}
-        {data.metrics?.marketCap != null && <MetricCard label="市值" value={`$${fmtMkt(data.metrics.marketCap)}`} source="F" />}
-        {data.metrics?.week52High != null && <MetricCard label="52周高" value={`$${data.metrics.week52High}`} source="F" />}
-        {data.metrics?.week52Low != null && <MetricCard label="52周低" value={`$${data.metrics.week52Low}`} source="F" />}
+        {data.price != null && <MetricCard label="最新价" value={`$${data.price}`} source="Y" />}
+        {data.changePct != null && <MetricCard label="涨跌幅" value={`${(data.changePct * 100).toFixed(2)}%`} source="Y" trend={data.changePct >= 0 ? 'up' : 'down'} />}
+        {data.dayHigh != null && <MetricCard label="日内高" value={`$${data.dayHigh}`} source="Y" />}
+        {data.dayLow != null && <MetricCard label="日内低" value={`$${data.dayLow}`} source="Y" />}
+        {data.prevClose != null && <MetricCard label="前收盘" value={`$${data.prevClose}`} source="Y" />}
       </div>
     </div>
   )
@@ -325,7 +317,7 @@ function NewsTab({ symbol }: { symbol: string }) {
 }
 
 function RatingsTab({ symbol }: { symbol: string }) {
-  const [data, setData] = useState<{ trends?: Array<{ period: string; strongBuy: number; buy: number; hold: number; sell: number; strongSell: number }>; targetHigh?: number; targetLow?: number; targetMean?: number } | null>(null)
+  const [data, setData] = useState<{ trends?: Array<{ period: string; strongBuy: number; buy: number; hold: number; sell: number; strongSell: number }>; targetMean?: number } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -339,7 +331,8 @@ function RatingsTab({ symbol }: { symbol: string }) {
   }, [symbol])
 
   if (loading) return <Skeleton />
-  if (!data?.trends?.length) return <EmptyState source="Finnhub" />
+  if (!data?.trends?.length && !data?.targetMean) return <EmptyState source="Yahoo Finance" />
+  if (!data.trends?.length) return <EmptyState source="Yahoo Finance" />
 
   const latest = data.trends[0]
   const total = latest.strongBuy + latest.buy + latest.hold + latest.sell + latest.strongSell
@@ -366,11 +359,9 @@ function RatingsTab({ symbol }: { symbol: string }) {
       </div>
 
       {/* Price targets */}
-      {(data.targetHigh || data.targetLow || data.targetMean) && (
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
-          {data.targetLow && <MetricCard label="最低目标价" value={`$${data.targetLow}`} source="F" />}
-          {data.targetMean && <MetricCard label="平均目标价" value={`$${data.targetMean}`} source="F" />}
-          {data.targetHigh && <MetricCard label="最高目标价" value={`$${data.targetHigh}`} source="F" />}
+      {data.targetMean != null && (
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <MetricCard label="平均目标价" value={`$${data.targetMean}`} source="Y" />
         </div>
       )}
     </div>
