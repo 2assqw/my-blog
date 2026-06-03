@@ -102,7 +102,7 @@ function AnalysisContent() {
       </div>
 
       <div className="mx-auto max-w-4xl px-3 sm:px-6 py-4 sm:py-8">
-        {tab === 'overview' && <OverviewTab data={data} companies={tickers} symbol={symbol} />}
+        {tab === 'overview' && <OverviewTab data={data} companies={tickers} symbol={symbol} cik={ciks[0]} />}
         {tab === 'financials' && <FinancialsTab data={data} companies={tickers} />}
         {tab === 'market' && <MarketTab symbol={symbol} />}
         {tab === 'news' && <NewsTab symbol={symbol} />}
@@ -131,7 +131,7 @@ function SourceFooter({ tab }: { tab: Tab }) {
 
 // ====== Overview Tab ======
 
-function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; companies: string[]; symbol: string }) {
+function OverviewTab({ data, companies, symbol, cik }: { data: FinancialData[]; companies: string[]; symbol: string; cik: string }) {
   const [mkt, setMkt] = useState<YahooMarket | null>(null)
   const [news, setNews] = useState<Array<{ headline: string; datetime: number; url: string }>>([])
 
