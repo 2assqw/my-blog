@@ -615,22 +615,21 @@ function PatternDashboard({ data, company }: { data: FinancialData; company: str
 
       {/* 5-dimension grid */}
       <div className="grid grid-cols-5 gap-1.5 text-center text-[10px]">
-        {[
-          { label: '收入', ...dimensions.revenue, fmt: (d: { trend: string; volatility: number; momentum: number }) => `${d.trend === 'up' ? '↑' : d.trend === 'down' ? '↓' : '→'} ${d.momentum}` },
-          { label: '毛利', ...dimensions.margin, fmt: (d: { trend: string; level: number; volatility: number }) => `${d.level}%` },
-          { label: '预期', ...dimensions.guidance, fmt: (d: { accuracy: number; bias: string }) => `${d.accuracy}%` },
-          { label: '反应', ...dimensions.reaction, fmt: (d: { positivePct: number; avgReaction: number }) => `${d.positivePct}%` },
-          { label: '股价', ...dimensions.price, fmt: (d: { return: number; volatility: number }) => `${d.return > 0 ? '+' : ''}${d.return}%` },
-        ].map(d => (
-          <div key={d.label} className={`rounded-lg p-2 ${
-            (d as { momentum?: number; accuracy?: number; positivePct?: number; return?: number }).momentum as number > 0 ||
-            (d as { accuracy?: number }).accuracy as number > 50 ||
-            (d as { return?: number }).return as number > 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-800'
-          }`}>
-            <p className="text-gray-400 mb-0.5">{d.label}</p>
-            <p className="font-medium text-gray-800 dark:text-gray-200">{(d as { fmt: () => string }).fmt()}</p>
-          </div>
-        ))}
+        <DimCell label="收入" color={dimensions.revenue.trend === 'up' ? 'green' : dimensions.revenue.trend === 'down' ? 'red' : 'gray'}>
+          {dimensions.revenue.trend === 'up' ? '↑' : dimensions.revenue.trend === 'down' ? '↓' : '→'} {dimensions.revenue.momentum}
+        </DimCell>
+        <DimCell label="毛利" color={dimensions.margin.trend === 'up' ? 'green' : dimensions.margin.trend === 'down' ? 'red' : 'gray'}>
+          {dimensions.margin.level}%
+        </DimCell>
+        <DimCell label="预期" color={dimensions.guidance.accuracy > 50 ? 'green' : 'gray'}>
+          {dimensions.guidance.accuracy}%
+        </DimCell>
+        <DimCell label="反应" color={dimensions.reaction.avgReaction > 0 ? 'green' : 'red'}>
+          {dimensions.reaction.positivePct}%
+        </DimCell>
+        <DimCell label="股价" color={dimensions.price.return > 0 ? 'green' : 'red'}>
+          {dimensions.price.return > 0 ? '+' : ''}{dimensions.price.return}%
+        </DimCell>
       </div>
 
       {/* Patterns */}
@@ -659,6 +658,15 @@ function PatternDashboard({ data, company }: { data: FinancialData; company: str
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function DimCell({ label, color, children }: { label: string; color: string; children: React.ReactNode }) {
+  return (
+    <div className={`rounded-lg p-2 ${color === 'green' ? 'bg-green-50 dark:bg-green-900/20' : color === 'red' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800'}`}>
+      <p className="text-gray-400 mb-0.5">{label}</p>
+      <p className="font-medium text-gray-800 dark:text-gray-200">{children}</p>
     </div>
   )
 }
