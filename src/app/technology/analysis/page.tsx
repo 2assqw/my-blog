@@ -120,11 +120,11 @@ function AnalysisContent() {
 
 function SourceFooter({ tab }: { tab: Tab }) {
   const sources: Record<Tab, string> = {
-    overview: 'Yahoo Finance · SEC EDGAR',
+    overview: 'Financial Modeling Prep · SEC EDGAR',
     financials: 'SEC EDGAR · 数据来自公司 10-K/10-Q 原始申报',
-    market: 'Yahoo Finance · 行情延迟 15 分钟',
-    news: 'Yahoo Finance · 新闻来自第三方媒体聚合',
-    ratings: 'Yahoo Finance · 评级数据来自各券商分析师',
+    market: 'Financial Modeling Prep · 行情延迟 15 分钟',
+    news: 'Financial Modeling Prep · 新闻来自第三方媒体聚合',
+    ratings: 'Financial Modeling Prep · 评级数据来自各券商分析师',
   }
   return (
     <div className="mt-8 pt-4 border-t border-gray-100 text-center text-[10px] sm:text-xs text-gray-400">
@@ -154,11 +154,11 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
   )
 }
 
-interface YahooMarket { price: number | null; change: number | null; changePct: number | null; dayHigh: number | null; dayLow: number | null; prevClose: number | null; candles: { close: number[]; timestamp: number[] } | null }
+interface FmpMarket { price: number | null; change: number | null; changePct: number | null; dayHigh: number | null; dayLow: number | null; prevClose: number | null; marketCap: number | null; pe: number | null; eps: number | null; week52High: number | null; week52Low: number | null; beta: number | null; volume: number | null; candles: { close: number[]; timestamp: number[] } | null }
 interface YahooNews { items?: Array<{ headline: string; summary: string; source: string; url: string; datetime: number }> }
 
 function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; companies: string[]; symbol: string }) {
-  const [market, setMarket] = useState<YahooMarket | null>(null)
+  const [market, setMarket] = useState<FmpMarket | null>(null)
   const [news, setNews] = useState<Array<{ headline: string; datetime: number; url: string }>>([])
   const [loading, setLoading] = useState(true)
 
@@ -177,10 +177,10 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <MetricCard label="股价" value={market?.price ? `$${market.price}` : '—'} source="Y" loading={loading} />
-        <MetricCard label="涨跌" value={market?.changePct != null ? `${(market.changePct * 100).toFixed(2)}%` : '—'} source="Y" loading={loading} trend={market?.changePct != null ? (market.changePct >= 0 ? 'up' : 'down') : undefined} />
-        <MetricCard label="日内高" value={market?.dayHigh ? `$${market.dayHigh}` : '—'} source="Y" loading={loading} />
-        <MetricCard label="日内低" value={market?.dayLow ? `$${market.dayLow}` : '—'} source="Y" loading={loading} />
+        <MetricCard label="股价" value={market?.price ? `$${market.price}` : '—'} source="FMP" loading={loading} />
+        <MetricCard label="涨跌" value={market?.changePct != null ? `${(market.changePct * 100).toFixed(2)}%` : '—'} source="FMP" loading={loading} trend={market?.changePct != null ? (market.changePct >= 0 ? 'up' : 'down') : undefined} />
+        <MetricCard label="日内高" value={market?.dayHigh ? `$${market.dayHigh}` : '—'} source="FMP" loading={loading} />
+        <MetricCard label="日内低" value={market?.dayLow ? `$${market.dayLow}` : '—'} source="FMP" loading={loading} />
       </div>
 
       {market?.price && (
@@ -204,13 +204,13 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
         </div>
       )}
 
-      {!loading && !market && !news.length && <EmptyState source="Yahoo Finance" />}
+      {!loading && !market && !news.length && <EmptyState source="FMP" />}
     </div>
   )
 }
 
 function MarketTab({ symbol }: { symbol: string }) {
-  const [data, setData] = useState<YahooMarket | null>(null)
+  const [data, setData] = useState<FmpMarket | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -225,8 +225,8 @@ function MarketTab({ symbol }: { symbol: string }) {
   }, [symbol])
 
   if (loading) return <Skeleton />
-  if (error) return <ErrorBlock source="Yahoo Finance" onRetry={() => window.location.reload()} />
-  if (!data?.price) return <EmptyState source="Yahoo Finance" />
+  if (error) return <ErrorBlock source="FMP" onRetry={() => window.location.reload()} />
+  if (!data?.price) return <EmptyState source="FMP" />
 
   const closes = data.candles?.close || []
   const maxV = Math.max(...closes, 1)
@@ -250,11 +250,15 @@ function MarketTab({ symbol }: { symbol: string }) {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        {data.price != null && <MetricCard label="最新价" value={`$${data.price}`} source="Y" />}
-        {data.changePct != null && <MetricCard label="涨跌幅" value={`${(data.changePct * 100).toFixed(2)}%`} source="Y" trend={data.changePct >= 0 ? 'up' : 'down'} />}
-        {data.dayHigh != null && <MetricCard label="日内高" value={`$${data.dayHigh}`} source="Y" />}
-        {data.dayLow != null && <MetricCard label="日内低" value={`$${data.dayLow}`} source="Y" />}
-        {data.prevClose != null && <MetricCard label="前收盘" value={`$${data.prevClose}`} source="Y" />}
+        <MetricCard label="最新价" value={data.price != null ? `$${data.price}` : '—'} source="FMP" />
+        <MetricCard label="涨跌幅" value={data.change != null ? `${data.change.toFixed(2)}%` : '—'} source="FMP" trend={data.change != null ? (data.change >= 0 ? 'up' : 'down') : undefined} />
+        {data.pe != null && <MetricCard label="P/E" value={`${data.pe.toFixed(1)}x`} source="FMP" />}
+        {data.marketCap != null && <MetricCard label="市值" value={`$${(data.marketCap / 1e9).toFixed(1)}B`} source="FMP" />}
+        {data.eps != null && <MetricCard label="EPS" value={`$${data.eps}`} source="FMP" />}
+        {data.dayHigh != null && <MetricCard label="日内高" value={`$${data.dayHigh}`} source="FMP" />}
+        {data.dayLow != null && <MetricCard label="日内低" value={`$${data.dayLow}`} source="FMP" />}
+        {data.week52High != null && <MetricCard label="52周高" value={`$${data.week52High}`} source="FMP" />}
+        {data.week52Low != null && <MetricCard label="52周低" value={`$${data.week52Low}`} source="FMP" />}
       </div>
     </div>
   )
@@ -331,8 +335,8 @@ function RatingsTab({ symbol }: { symbol: string }) {
   }, [symbol])
 
   if (loading) return <Skeleton />
-  if (!data?.trends?.length && !data?.targetMean) return <EmptyState source="Yahoo Finance" />
-  if (!data.trends?.length) return <EmptyState source="Yahoo Finance" />
+  if (!data?.trends?.length && !data?.targetMean) return <EmptyState source="FMP" />
+  if (!data.trends?.length) return <EmptyState source="FMP" />
 
   const latest = data.trends[0]
   const total = latest.strongBuy + latest.buy + latest.hold + latest.sell + latest.strongSell
@@ -361,7 +365,7 @@ function RatingsTab({ symbol }: { symbol: string }) {
       {/* Price targets */}
       {data.targetMean != null && (
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
-          <MetricCard label="平均目标价" value={`$${data.targetMean}`} source="Y" />
+          <MetricCard label="平均目标价" value={`$${data.targetMean}`} source="FMP" />
         </div>
       )}
     </div>
