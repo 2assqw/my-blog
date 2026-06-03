@@ -75,7 +75,7 @@ function linearSlope(y: number[]): number {
   return den === 0 ? 0 : num / den
 }
 
-Function IQR(arr: number[]): { q1: number; q3: number; iqr: number } {
+function calcIQR(arr: number[]): { q1: number; q3: number; iqr: number } {
   const sorted = [...arr].sort((a, b) => a - b)
   const q1 = sorted[Math.floor(sorted.length * 0.25)]
   const q3 = sorted[Math.floor(sorted.length * 0.75)]
@@ -124,7 +124,7 @@ function detectAnomalies(data: QData[]): Anomaly[] {
     }
 
     // IQR outlier on most recent
-    const { q1, q3, iqr } = IQR(valid)
+    const { q1, q3, iqr } = calcIQR(valid)
     const latest = data[data.length - 1][key]
     if (latest > 0 && (latest < q1 - 1.5 * iqr || latest > q3 + 1.5 * iqr)) {
       if (!anomalies.some(a => a.metric === label && a.period === data[data.length - 1].period.slice(0, 7))) {
