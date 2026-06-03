@@ -15,6 +15,26 @@ const LABELS: Record<Tab, string> = { overview: '概览', financials: '财报', 
 
 interface YahooMarket { price: number | null; change: number | null; changePct: number | null; dayHigh: number | null; dayLow: number | null; prevClose: number | null; candles: { close: number[]; timestamp: number[] } | null }
 
+function getMarketStatus(): { label: string; color: string } {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const m = now.getUTCHours() * 60 + now.getUTCMinutes()
+  const month = now.getUTCMonth() // 0=Jan
+  const isDST = month >= 2 && month <= 10 // US DST approx March–Nov
+  const off = isDST ? 4 : 5
+  const pre = 4 * 60 + off * 60
+  const open = 9 * 60 + 30 + off * 60
+  const close = 16 * 60 + off * 60
+  const after = 20 * 60 + off * 60
+
+  if (day === 0 || day === 6) return { label: '休市', color: 'bg-gray-200 text-gray-600' }
+  if (m < pre)    return { label: '盘前待开', color: 'bg-gray-200 text-gray-600' }
+  if (m < open)   return { label: '盘前交易', color: 'bg-amber-100 text-amber-700' }
+  if (m < close)  return { label: '交易中',  color: 'bg-green-100 text-green-700' }
+  if (m < after)  return { label: '盘后交易', color: 'bg-amber-100 text-amber-700' }
+  return { label: '已收盘', color: 'bg-gray-200 text-gray-600' }
+}
+
 function AnalysisContent() {
   const params = useSearchParams()
   const router = useRouter()
@@ -122,9 +142,10 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
     <div className="space-y-4 sm:space-y-6">
       {mkt?.price && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
-          <div className="flex items-baseline gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-2xl font-bold">${mkt.price}</span>
             <span className={`text-sm font-medium ${(mkt.change ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>{(mkt.change ?? 0) >= 0 ? '+' : ''}{mkt.change?.toFixed(2) ?? '—'} ({(mkt.changePct ?? 0).toFixed(2)}%)</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getMarketStatus().color}`}>{getMarketStatus().label}</span>
             <span className="text-[10px] text-gray-400 ml-auto">Yahoo</span>
           </div>
         </div>
@@ -204,6 +225,10 @@ function MarketTab({ symbol }: { symbol: string }) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-3 flex-wrap">
+        <h3 className="text-sm font-semibold text-gray-700">市场数据</h3>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getMarketStatus().color}`}>{getMarketStatus().label}</span>
+      </div>
       {closes.length > 5 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">近 6 个月走势</h3>
