@@ -175,7 +175,7 @@ function OverviewTab({ data, companies, symbol, cik }: { data: FinancialData[]; 
         <Card label="负债率" value={ta > 0 ? `${((tl/ta)*100).toFixed(1)}%` : '—'} src="SEC" />
       </div>
 
-      <InsiderCard cik={ciks[0]} />
+      <InsiderCard cik={cik} />
 
       {news.length > 0 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
