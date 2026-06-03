@@ -293,6 +293,141 @@ function adaptiveRisk(rows: QRow[], mweResults: Record<MetricKey, MweResult>, co
   }
 }
 
+// ---- Algorithm 5: Multi-Factor Reference Entry Price ----
+
+interface ValuationRange {
+  method: string
+  price: number
+  weight: number
+  description: string
+}
+
+interface Valuation {
+  referencePrice: number
+  lowEstimate: number
+  highEstimate: number
+  confidence: 'low' | 'medium' | 'high'
+  methods: ValuationRange[]
+  disclaimer: string
+}
+
+function computeValuation(rows: QRow[], currentPrice?: number): Valuation {
+  const latest = rows[rows.length - 1]
+  const prev = rows.length > 1 ? rows[rows.length - 2] : latest
+  if (!latest || !currentPrice || currentPrice <= 0) {
+    return { referencePrice: 0, lowEstimate: 0, highEstimate: 0, confidence: 'low', methods: [],
+      disclaimer: '数据不足，无法计算参考入场价。当前股价缺失，无法完成估值模型。' }
+  }
+
+  // Key data points
+  const ni = latest.netIncome  // latest quarter net income
+  const ocf = latest.operatingCashFlow
+  const equity = latest.totalAssets - latest.totalLiabilities
+  const revenue = latest.revenue
+
+  if (ni <= 0 || equity <= 0) {
+    return { referencePrice: 0, lowEstimate: 0, highEstimate: 0, confidence: 'low', methods: [],
+      disclaimer: '公司净利润或净资产为负，传统估值模型不适用。' }
+  }
+
+  // Annualize (quarterly → annual × 4)
+  const annualNI = ni * 4
+  const annualOCF = ocf * 4
+  const annualRevenue = revenue * 4
+
+  // Implied shares: estimate from book value per share reverse engineering
+  // Typical P/B ratios by sector vary. We'll use a range.
+  // For tech-like companies: P/B ~ 5-10, for industrials: 1-3
+  // Use a generic approach: assume P/B = 3 as default
+  const assumedPB = 3.0
+  const impliedMarketCap = equity * assumedPB
+  const impliedShares = impliedMarketCap / currentPrice
+
+  if (impliedShares <= 0) {
+    return { referencePrice: 0, lowEstimate: 0, highEstimate: 0, confidence: 'low', methods: [],
+      disclaimer: '无法推算流通股数，请提供实际流通股数据。' }
+  }
+
+  const eps = annualNI / impliedShares
+  const bvps = equity / impliedShares
+  const fcfPerShare = annualOCF / impliedShares
+  const revPerShare = annualRevenue / impliedShares
+
+  const methods: ValuationRange[] = []
+
+  // Method 1: Graham Number √(22.5 × EPS × BVPS)
+  if (eps > 0 && bvps > 0) {
+    const graham = Math.sqrt(22.5 * eps * bvps)
+    methods.push({
+      method: 'Graham 公式',
+      price: graham,
+      weight: 0.35,
+      description: `√(22.5 × EPS $${eps.toFixed(1)} × BVPS $${bvps.toFixed(1)})`,
+    })
+  }
+
+  // Method 2: P/E-based (assuming industry PE = 15)
+  const assumedPE = 15
+  if (eps > 0) {
+    const pePrice = eps * assumedPE
+    methods.push({
+      method: 'P/E 估值',
+      price: pePrice,
+      weight: 0.25,
+      description: `EPS $${eps.toFixed(1)} × 行业PE ${assumedPE}x`,
+    })
+  }
+
+  // Method 3: Price-to-Cash-Flow (P/CF = 12)
+  if (fcfPerShare > 0) {
+    const pcfPrice = fcfPerShare * 12
+    methods.push({
+      method: '现金流估值',
+      price: pcfPrice,
+      weight: 0.25,
+      description: `FCF/股 $${fcfPerShare.toFixed(1)} × P/CF 12x`,
+    })
+  }
+
+  // Method 4: Price-to-Sales (P/S = 3)
+  if (revPerShare > 0) {
+    methods.push({
+      method: '市销率估值',
+      price: revPerShare * 3,
+      weight: 0.15,
+      description: `营收/股 $${revPerShare.toFixed(1)} × P/S 3x`,
+    })
+  }
+
+  if (methods.length === 0) {
+    return { referencePrice: 0, lowEstimate: 0, highEstimate: 0, confidence: 'low', methods: [],
+      disclaimer: '所有估值方法均因数据不足而无法计算。' }
+  }
+
+  // Weighted average
+  const totalWeight = methods.reduce((s, m) => s + m.weight, 0)
+  let refPrice = 0
+  let minPrice = Infinity, maxPrice = -Infinity
+  for (const m of methods) {
+    refPrice += m.price * (m.weight / totalWeight)
+    if (m.price < minPrice) minPrice = m.price
+    if (m.price > maxPrice) maxPrice = m.price
+  }
+
+  // Confidence: based on spread of estimates
+  const spread = (maxPrice - minPrice) / refPrice
+  const confidence = spread < 0.3 ? 'high' : spread < 0.6 ? 'medium' : 'low'
+
+  return {
+    referencePrice: Math.round(refPrice * 100) / 100,
+    lowEstimate: Math.round(minPrice * 100) / 100,
+    highEstimate: Math.round(maxPrice * 100) / 100,
+    confidence,
+    methods,
+    disclaimer: `参考入场价 $${(refPrice).toFixed(2)}，基于 ${methods.length} 种估值方法的加权平均。当前股价 $${currentPrice.toFixed(2)}，${currentPrice > refPrice ? '高于' : '低于'}参考价。此计算结果仅供算法研究参考，不构成任何投资建议。股市有风险，入市须谨慎。历史表现不代表未来收益。`,
+  }
+}
+
 // ---- Main Engine Export ----
 
 export interface EngineOutput {
@@ -302,9 +437,10 @@ export interface EngineOutput {
   correlations: Correlation[]
   patterns: PatternResult[]
   risk: RiskAssessment
+  valuation: Valuation | null
 }
 
-export function runEngine(d: FinancialData, company: string): EngineOutput {
+export function runEngine(d: FinancialData, company: string, currentPrice?: number): EngineOutput {
   const rows = toQuarters(d, 12)
 
   const mweResults: Record<MetricKey, MweResult> = {
@@ -320,6 +456,8 @@ export function runEngine(d: FinancialData, company: string): EngineOutput {
   const patterns = recognizePatterns(rows)
   const risk = adaptiveRisk(rows, mweResults, correlations, patterns)
 
+  const valuation = currentPrice && currentPrice > 0 ? computeValuation(rows, currentPrice) : null
+
   return {
     company,
     quartersAnalyzed: rows.length,
@@ -334,5 +472,6 @@ export function runEngine(d: FinancialData, company: string): EngineOutput {
     correlations,
     patterns,
     risk,
+    valuation,
   }
 }

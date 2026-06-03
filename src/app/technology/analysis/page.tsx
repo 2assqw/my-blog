@@ -221,7 +221,7 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
       <MetricChart title="经营现金流" data={data} metricKey="operatingCashFlow" companies={companies} />
       <MetricChart title="毛利润" data={data} metricKey="grossProfit" companies={companies} />
       {data.map((d, i) => (
-        <AlgorithmicSummary key={i} data={d} company={companies[i]} />
+        <AlgorithmicSummary key={i} data={d} company={companies[i]} symbol={companies[i]} />
       ))}
     </div>
   )
@@ -371,9 +371,17 @@ function InsiderCard({ cik }: { cik: string }) {
   )
 }
 
-function AlgorithmicSummary({ data, company }: { data: FinancialData; company: string }) {
-  const engine = runEngine(data, company)
-  const { risk, correlations, patterns, predictions, quartersAnalyzed } = engine
+function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; company: string; symbol: string }) {
+  const [price, setPrice] = useState<number | null>(null)
+  useEffect(() => {
+    if (!symbol) return
+    fetch(`/api/market?symbol=${symbol}`).then(r => r.json()).then(d => {
+      if (d.price) setPrice(d.price)
+    })
+  }, [symbol])
+
+  const engine = runEngine(data, company, price ?? undefined)
+  const { risk, correlations, patterns, predictions, quartersAnalyzed, valuation } = engine
 
   const preds = Object.entries(predictions).filter(([, v]) => v.predicted != null)
 
@@ -483,6 +491,42 @@ function AlgorithmicSummary({ data, company }: { data: FinancialData; company: s
             ))}
           </div>
         )}
+      </div>
+
+      {/* Valuation */}
+      {valuation && valuation.referencePrice > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">参考入场价</h4>
+          <div className="rounded-lg border border-brand-100 dark:border-brand-900 bg-brand-50/50 dark:bg-brand-900/20 p-4">
+            <div className="flex items-baseline gap-3 mb-3">
+              <span className="text-2xl font-bold text-brand">${valuation.referencePrice.toFixed(2)}</span>
+              <span className="text-xs text-gray-500">加权参考价 · 估值范围 ${valuation.lowEstimate.toFixed(2)} — ${valuation.highEstimate.toFixed(2)}</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                valuation.confidence === 'high' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                valuation.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+              }`}>
+                可信度 {valuation.confidence === 'high' ? '高' : valuation.confidence === 'medium' ? '中' : '低'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {valuation.methods.map(m => (
+                <div key={m.method} className="rounded bg-white dark:bg-gray-800 p-2 text-center">
+                  <p className="text-[10px] text-gray-400">{m.method}</p>
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">${m.price.toFixed(2)}</p>
+                  <p className="text-[9px] text-gray-400">{m.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disclaimer */}
+      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3">
+        <p className="text-[10px] text-red-600 dark:text-red-400 leading-relaxed">
+          ⚠️ <strong>免责声明：</strong>FinScope 引擎所有计算（估值、预测、风险评分、形态识别）均为纯算法推导，基于 SEC 历史财报数据，不构成任何投资建议。参考入场价由多因子模型加权得出，不保证准确性。股市有风险，投资须谨慎。过去表现不代表未来收益。请咨询持牌金融顾问后再做投资决策。
+        </p>
       </div>
 
       <p className="text-[10px] text-gray-400 text-center">FinScope Adaptive Analytics Engine — MWE · 波动率自适应 · 跨指标关联矩阵</p>
