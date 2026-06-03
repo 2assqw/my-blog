@@ -45,6 +45,23 @@ function AnalysisContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
+      const idx = TABS.indexOf(tab)
+      if (e.key === '1') setTab('overview')
+      else if (e.key === '2') setTab('financials')
+      else if (e.key === '3') setTab('market')
+      else if (e.key === '4') setTab('news')
+      else if (e.key === '5') setTab('ratings')
+      else if (e.key === 'ArrowRight' && idx < TABS.length - 1) setTab(TABS[idx + 1])
+      else if (e.key === 'ArrowLeft' && idx > 0) setTab(TABS[idx - 1])
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tab])
+
   useEffect(() => {
     if (!ciks.length) { router.push('/technology/'); return }
     setLoading(true)

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTheme } from '@/components/ThemeProvider'
 
 const links = [
   { href: '/', label: 'Home' },
@@ -16,6 +17,7 @@ const links = [
 export function Header() {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
+  const { theme, toggle } = useTheme()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -64,6 +66,13 @@ export function Header() {
               )
             })}
           </div>
+          <button
+            onClick={toggle}
+            className="theme-toggle shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-300 hover:scale-110 bg-gray-100 dark:bg-gray-800"
+            title="切换暗色/亮色"
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
         </nav>
       </div>
     </header>

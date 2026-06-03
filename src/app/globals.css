@@ -4,8 +4,33 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-800 antialiased;
+    @apply bg-gray-50 text-gray-800 antialiased transition-colors duration-500;
   }
+
+  /* Dark mode */
+  .dark body { @apply bg-gray-950 text-gray-200; }
+  .dark .bg-white { @apply bg-gray-900; }
+  .dark .bg-gray-50 { @apply bg-gray-950; }
+  .dark .bg-gray-100 { @apply bg-gray-800; }
+  .dark .border-gray-100 { @apply border-gray-800; }
+  .dark .border-gray-200 { @apply border-gray-700; }
+  .dark .text-gray-800 { @apply text-gray-200; }
+  .dark .text-gray-900 { @apply text-gray-100; }
+  .dark .text-gray-700 { @apply text-gray-300; }
+  .dark .text-gray-500 { @apply text-gray-400; }
+  .dark .text-gray-400 { @apply text-gray-500; }
+  .dark .shadow-sm { @apply shadow-gray-900/30; }
+  .dark .hover\:bg-gray-50:hover { @apply hover:bg-gray-800; }
+  .dark .hover\:bg-gray-100:hover { @apply hover:bg-gray-800; }
+  .dark .hover\:bg-gray-200:hover { @apply hover:bg-gray-700; }
+  .dark .hover\:text-gray-700:hover { @apply hover:text-gray-200; }
+  .dark .hover\:text-gray-900:hover { @apply hover:text-gray-100; }
+  .dark .hover\:text-gray-600:hover { @apply hover:text-gray-300; }
+  .dark .prose { @apply text-gray-300; }
+  .dark .prose h1, .dark .prose h2, .dark .prose h3 { @apply text-gray-100; }
+  .dark .book-card { @apply bg-gray-900 shadow-gray-900/30; }
+  .dark .book-reader { @apply bg-gray-950; }
+  .dark .book-topbar, .dark .book-bottombar { @apply border-gray-800; }
 
   /* Global paper noise texture — SVG feTurbulence, barely visible */
   body::before {
@@ -533,4 +558,31 @@
 .book-page-input:focus {
   border-color: #4F46E5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+/* ================================================================
+   Theme transition — circular reveal animation
+   ================================================================ */
+
+.theme-reveal {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1e1b4b 0%, #0f172a 100%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: theme-reveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes theme-reveal {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  50%  { opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(80); opacity: 0; }
+}
+
+/* Dark mode theme toggle button glow */
+.dark .theme-toggle {
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
 }
