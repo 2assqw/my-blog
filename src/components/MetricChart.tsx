@@ -22,11 +22,9 @@ function fmtFiscal(period: string): string {
 // Simple linear regression: predict next value from last N values
 function predictNext(values: (number | null)[], window = 4): { value: number | null; confidence: 'low' | 'medium' | 'high' } {
   const valid: Array<{ x: number; y: number }> = []
-  let lastIdx = 0
   for (let i = 0; i < values.length; i++) {
-    if (values[i] != null && values[i] > 0) {
-      valid.push({ x: valid.length, y: values[i]! })
-      lastIdx = valid.length
+    if (values[i] != null && values[i]! > 0) {
+      valid.push({ x: valid.length, y: values[i] as number })
     }
   }
   if (valid.length < 3) return { value: null, confidence: 'low' }
@@ -127,7 +125,7 @@ export function MetricChart({ title, data, metricKey, companies }: Props) {
           {companies.map((c, i) => {
             const predVal = predRow[c] as number | null
             if (predVal == null) return null
-            const prevRow = chartData[chartData.length - 2]
+            const prevRow = chartData[chartData.length - 2] ?? null
             const prevVal = prevRow ? (prevRow[c] as number | null) : null
             if (prevVal == null) return null
 
