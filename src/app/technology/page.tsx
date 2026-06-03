@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FinanceSearch } from '@/components/FinanceSearch'
 import { FinancePicker } from '@/components/FinancePicker'
+import { CompanyScreener } from '@/components/CompanyScreener'
 import type { SearchResult } from '@/lib/finance-api'
 
 export default function TechnologyPage() {
@@ -50,6 +51,12 @@ export default function TechnologyPage() {
         >
           开始分析 →
         </button>
+
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h2 className="text-center text-lg font-semibold text-gray-700 mb-1">智能筛选</h2>
+          <p className="text-center text-xs text-gray-400 mb-4">输入自然语言条件，筛选符合条件的公司</p>
+          <CompanyScreener />
+        </div>
       </div>
     </main>
   )
