@@ -8,6 +8,7 @@ import { CompanyScore } from '@/components/CompanyScore'
 import { ScatterCompare } from '@/components/ScatterCompare'
 import { MetricChart } from '@/components/MetricChart'
 import { PeriodToggle } from '@/components/PeriodToggle'
+import { analyze } from '@/lib/algorithmic-summary'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -213,12 +214,15 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
     <div className="space-y-4 sm:space-y-6">
       {companies.length === 2 && <CompanyScore data={data} companies={companies} />}
       <ScatterCompare data={data} companies={companies} />
-      <MetricChart title="收入 (Revenue)" data={data} metricKey="revenue" companies={companies} />
-      <MetricChart title="净利润 (Net Income)" data={data} metricKey="netIncome" companies={companies} />
-      <MetricChart title="总资产 (Total Assets)" data={data} metricKey="totalAssets" companies={companies} />
-      <MetricChart title="总负债 (Total Liabilities)" data={data} metricKey="totalLiabilities" companies={companies} />
+      <MetricChart title="收入" data={data} metricKey="revenue" companies={companies} />
+      <MetricChart title="净利润" data={data} metricKey="netIncome" companies={companies} />
+      <MetricChart title="总资产" data={data} metricKey="totalAssets" companies={companies} />
+      <MetricChart title="总负债" data={data} metricKey="totalLiabilities" companies={companies} />
       <MetricChart title="经营现金流" data={data} metricKey="operatingCashFlow" companies={companies} />
       <MetricChart title="毛利润" data={data} metricKey="grossProfit" companies={companies} />
+      {data.map((d, i) => (
+        <AlgorithmicSummary key={i} data={d} company={companies[i]} />
+      ))}
     </div>
   )
 }
@@ -363,6 +367,61 @@ function InsiderCard({ cik }: { cik: string }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function AlgorithmicSummary({ data, company }: { data: FinancialData; company: string }) {
+  const summary = analyze(data)
+  const { risks, anomalies, totalRiskScore, summaryText, quartersAnalyzed } = summary
+
+  const riskColor = (l: string) => l === 'critical' ? 'text-red-600 bg-red-50 dark:bg-red-900 dark:text-red-300' : l === 'high' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900 dark:text-orange-300' : 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900 dark:text-yellow-300'
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          算法分析 · {company} ({quartersAnalyzed} 季度)
+        </h3>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${totalRiskScore >= 50 ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : totalRiskScore >= 25 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'}`}>
+          风险评分 {totalRiskScore}/100
+        </span>
+      </div>
+
+      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{summaryText}</p>
+
+      {anomalies.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">异常检测</h4>
+          <div className="space-y-1">
+            {anomalies.map((a, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className={`shrink-0 px-1 py-0.5 rounded font-medium ${a.severity === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'}`}>
+                  {a.severity === 'critical' ? '严重' : '警告'}
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">{a.description} (偏差 {a.deviation})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">风险评估</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {risks.map((r, i) => (
+            <div key={i} className={`rounded-lg p-3 ${riskColor(r.level)} bg-opacity-30`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold">{r.category}</span>
+                <span className="text-[10px] opacity-70">{r.score}/25</span>
+              </div>
+              <p className="text-[10px] leading-relaxed opacity-80">{r.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-[10px] text-gray-400 text-center">算法分析基于纯数学统计（Z-score、IQR、线性回归），非 AI 生成</p>
     </div>
   )
 }
