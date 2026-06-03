@@ -10,6 +10,7 @@ import { MetricChart } from '@/components/MetricChart'
 import { PeriodToggle } from '@/components/PeriodToggle'
 import { runEngine } from '@/lib/finscope-engine'
 import { computeScores, INDICATORS, IndicatorCategory } from '@/lib/finscope-indicators'
+import { analyzePatterns } from '@/lib/finscope-patterns'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -214,7 +215,10 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
   return (
     <div className="space-y-4 sm:space-y-6">
       {data.map((d, i) => (
-        <IndicatorDashboard key={i} data={d} company={companies[i]} />
+        <div key={i} className="space-y-4">
+          <IndicatorDashboard data={d} company={companies[i]} />
+          <PatternDashboard data={d} company={companies[i]} />
+        </div>
       ))}
       <ScatterCompare data={data} companies={companies} />
       <MetricChart title="收入" data={data} metricKey="revenue" companies={companies} />
@@ -588,6 +592,73 @@ function IndicatorDashboard({ data, company }: { data: FinancialData; company: s
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function PatternDashboard({ data, company }: { data: FinancialData; company: string }) {
+  const report = analyzePatterns(data, company)
+  const { patterns, compositeSignal, dimensions } = report
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">模式识别 · {report.quarters.length} 季度</h3>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          compositeSignal.direction === '看多' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+          compositeSignal.direction === '看空' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+          'bg-gray-100 text-gray-600'
+        }`}>
+          {compositeSignal.direction} {compositeSignal.score}/100
+        </span>
+      </div>
+
+      {/* 5-dimension grid */}
+      <div className="grid grid-cols-5 gap-1.5 text-center text-[10px]">
+        {[
+          { label: '收入', ...dimensions.revenue, fmt: (d: { trend: string; volatility: number; momentum: number }) => `${d.trend === 'up' ? '↑' : d.trend === 'down' ? '↓' : '→'} ${d.momentum}` },
+          { label: '毛利', ...dimensions.margin, fmt: (d: { trend: string; level: number; volatility: number }) => `${d.level}%` },
+          { label: '预期', ...dimensions.guidance, fmt: (d: { accuracy: number; bias: string }) => `${d.accuracy}%` },
+          { label: '反应', ...dimensions.reaction, fmt: (d: { positivePct: number; avgReaction: number }) => `${d.positivePct}%` },
+          { label: '股价', ...dimensions.price, fmt: (d: { return: number; volatility: number }) => `${d.return > 0 ? '+' : ''}${d.return}%` },
+        ].map(d => (
+          <div key={d.label} className={`rounded-lg p-2 ${
+            (d as { momentum?: number; accuracy?: number; positivePct?: number; return?: number }).momentum as number > 0 ||
+            (d as { accuracy?: number }).accuracy as number > 50 ||
+            (d as { return?: number }).return as number > 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-800'
+          }`}>
+            <p className="text-gray-400 mb-0.5">{d.label}</p>
+            <p className="font-medium text-gray-800 dark:text-gray-200">{(d as { fmt: () => string }).fmt()}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Patterns */}
+      {patterns.length > 0 && (
+        <div className="space-y-1.5">
+          {patterns.map((p, i) => (
+            <div key={i} className={`flex items-start gap-2 text-xs rounded-lg p-2 ${
+              p.signal.includes('bullish') ? 'bg-green-50 dark:bg-green-900/20' :
+              p.signal.includes('bearish') ? 'bg-red-50 dark:bg-red-900/20' :
+              'bg-gray-50 dark:bg-gray-800'
+            }`}>
+              <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                p.signal === 'strong-bullish' ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200' :
+                p.signal === 'bullish' ? 'bg-green-100 text-green-700' :
+                p.signal === 'bearish' ? 'bg-red-100 text-red-700' :
+                p.signal === 'strong-bearish' ? 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200' :
+                'bg-gray-200 text-gray-600'
+              }`}>
+                {p.signal.includes('bullish') ? '↑' : p.signal.includes('bearish') ? '↓' : '—'} {Math.round(p.confidence)}%
+              </span>
+              <div>
+                <p className="font-medium text-gray-700 dark:text-gray-300">{p.name}</p>
+                <p className="text-gray-500">{p.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
