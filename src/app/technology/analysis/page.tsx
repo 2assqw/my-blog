@@ -175,6 +175,8 @@ function OverviewTab({ data, companies, symbol }: { data: FinancialData[]; compa
         <Card label="负债率" value={ta > 0 ? `${((tl/ta)*100).toFixed(1)}%` : '—'} src="SEC" />
       </div>
 
+      <InsiderCard cik={ciks[0]} />
+
       {news.length > 0 && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">最新动态</h3>
@@ -332,6 +334,35 @@ function RatingsTab({ symbol }: { symbol: string }) {
         </div>
       </div>
       {d.targetMean != null && <Card label="平均目标价" value={`$${d.targetMean}`} src="Yahoo" />}
+    </div>
+  )
+}
+
+function InsiderCard({ cik }: { cik: string }) {
+  const [items, setItems] = useState<Array<{ title: string; summary: string; date: string; url: string }>>([])
+  useEffect(() => {
+    if (!cik) return
+    fetch(`/api/insider?cik=${cik}`).then(r => r.json()).then(d => setItems(d.items || []))
+  }, [cik])
+  if (!items.length) return null
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 dark:bg-gray-900 dark:border-gray-800">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">内部人交易</h3>
+      <div className="space-y-2 max-h-60 overflow-y-auto">
+        {items.map((it, i) => {
+          const isBuy = it.title.includes('Purchase') || it.summary.includes('P-Purchase')
+          const isSell = it.title.includes('Sale') || it.summary.includes('S-Sale')
+          const badge = isBuy ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : isSell ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+          const action = isBuy ? '买入' : isSell ? '卖出' : '交易'
+          return (
+            <a key={i} href={it.url} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 text-xs group">
+              <span className={`shrink-0 px-1.5 py-0.5 rounded font-medium ${badge}`}>{action}</span>
+              <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{it.summary}</span>
+            </a>
+          )
+        })}
+      </div>
     </div>
   )
 }
