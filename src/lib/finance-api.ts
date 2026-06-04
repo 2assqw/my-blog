@@ -74,7 +74,7 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter',
       })
 
       if (parsed && (parsed.revenue != null || parsed.totalAssets != null)) {
-        allData.push({ date: filing.reportDate, ...parsed })
+        allData.push({ date: filing.reportDate, ...parsed } as Record<string, number | null> & { date: string })
       }
     } catch { /* skip */ }
   }
