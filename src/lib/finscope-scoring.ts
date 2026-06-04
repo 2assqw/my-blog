@@ -46,7 +46,13 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const x4 = tl > 0 ? Math.min(actualMktCap / tl, 10) : 0
   const x5 = rev / ta
 
-  const z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 0.999 * x5
+  const z = (
+    1.2 * (isNaN(x1) ? 0 : x1) +
+    1.4 * (isNaN(x2) ? 0 : x2) +
+    3.3 * (isNaN(x3) ? 0 : x3) +
+    0.6 * (isNaN(x4) ? 0 : x4) +
+    0.999 * (isNaN(x5) ? 0 : x5)
+  )
 
   const components = [
     { label: '营运资本/总资产', value: Math.round(x1*1000)/1000, threshold: '>0.15', pass: x1 > 0.15 },
@@ -104,7 +110,10 @@ export function beneishMScore(d: FinancialData): ScoreCard {
   // TATA: Total Accruals to Total Assets
   const tata = safeDiv(ni - ocf, ta)
 
-  const m = -4.84 + 0.92*dsri + 0.528*gmi + 0.404*aqi + 0.892*sgi + 0.115*depi - 0.172*sgai_idx + 4.679*tata - 0.327*lvgi
+  const m = -4.84 +
+    0.92*(isNaN(dsri)?0:dsri) + 0.528*(isNaN(gmi)?0:gmi) + 0.404*(isNaN(aqi)?0:aqi) +
+    0.892*(isNaN(sgi)?0:sgi) + 0.115*(isNaN(depi)?0:depi) - 0.172*(isNaN(sgai_idx)?0:sgai_idx) +
+    4.679*(isNaN(tata)?0:tata) - 0.327*(isNaN(lvgi)?0:lvgi)
 
   const components = [
     { label: '应收账款指数', value: Math.round(dsri*100)/100, threshold: '<1.0', pass: dsri < 1.0 },
