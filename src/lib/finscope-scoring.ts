@@ -15,7 +15,7 @@ interface ScoreCard {
   maxScore: number
   rating: string
   interpretation: string
-  components: Array<{ label: string; value: number; threshold: string; pass: boolean }>
+  components: Array<{ label: string; value: number | string; threshold: string; pass: boolean }>
 }
 
 // ================================================================
