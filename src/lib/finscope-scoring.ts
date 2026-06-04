@@ -5,8 +5,8 @@ import type { FinancialData } from '@/lib/finance-api'
 
 // ---- Helpers ----
 
-function latest(arr: (number | null)[]): number { for (let i = arr.length-1; i >= 0; i--) if (arr[i] != null) return arr[i]!; return 0 }
-function prev(arr: (number | null)[]): number { let f = false; for (let i = arr.length-1; i >= 0; i--) { if (arr[i] != null) { if (f) return arr[i]!; f = true } } return 0 }
+function latest(arr: (number | null)[] | undefined): number { if (!arr) return 0; for (let i = arr.length-1; i >= 0; i--) if (arr[i] != null) return arr[i]!; return 0 }
+function prev(arr: (number | null)[] | undefined): number { if (!arr) return 0; let f = false; for (let i = arr.length-1; i >= 0; i--) { if (arr[i] != null) { if (f) return arr[i]!; f = true } } return 0 }
 function assetTurnover(revenue: number, assets: number): number { return assets > 0 ? revenue / assets : 0 }
 
 interface ScoreCard {
