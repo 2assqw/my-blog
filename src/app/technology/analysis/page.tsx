@@ -746,7 +746,9 @@ function DimCell({ label, color, children }: { label: string; color: string; chi
 }
 
 function ScoreDashboard({ data, company }: { data: FinancialData; company: string }) {
-  const report = generateScoreReport(data)
+  // Pass actual market cap for X₄ calculation
+  const mktCap = (data.marketCap?.length || 0) > 0 ? data.marketCap![data.marketCap!.length - 1] : null
+  const report = generateScoreReport(data, mktCap)
   const { altmanZ, beneishM, piotroskiF, consensus, consensusScore } = report
 
   return (

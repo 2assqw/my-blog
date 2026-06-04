@@ -8,6 +8,12 @@ export interface FinancialData {
   revenue: (number | null)[]; netIncome: (number | null)[]; totalAssets: (number | null)[]
   totalLiabilities: (number | null)[]; operatingCashFlow: (number | null)[]; grossProfit: (number | null)[]
   eps?: (number | null)[]
+  // TTM series (built-in at database layer)
+  revenueTTM?: (number | null)[]; netIncomeTTM?: (number | null)[]; operatingCashFlowTTM?: (number | null)[]
+  ebitTTM?: (number | null)[]
+  // Market data from build-time
+  sharesOutstanding?: (number | null)[]; marketCap?: (number | null)[]
+  // Extended
   currentAssets?: (number | null)[]; currentLiabilities?: (number | null)[]; accountsReceivable?: (number | null)[]
   longTermDebt?: (number | null)[]; stockholdersEquity?: (number | null)[]; retainedEarnings?: (number | null)[]
   commonStock?: (number | null)[]; operatingIncome?: (number | null)[]; interestExpense?: (number | null)[]
@@ -37,6 +43,12 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter',
         grossProfit: qs.map(q => q.grossProfit ?? null), totalAssets: qs.map(q => q.totalAssets ?? null),
         totalLiabilities: qs.map(q => q.totalLiabilities ?? null), operatingCashFlow: qs.map(q => q.operatingCashFlow ?? null),
         eps: qs.map(q => q.eps ?? null),
+        revenueTTM: qs.map(q => (q as Record<string,unknown>).revenueTTM as number ?? null),
+        netIncomeTTM: qs.map(q => (q as Record<string,unknown>).netIncomeTTM as number ?? null),
+        operatingCashFlowTTM: qs.map(q => (q as Record<string,unknown>).operatingCashFlowTTM as number ?? null),
+        ebitTTM: qs.map(q => null), // computed server-side in engine
+        sharesOutstanding: qs.map(q => (q as Record<string,unknown>).sharesOutstanding as number ?? null),
+        marketCap: qs.map(q => (q as Record<string,unknown>).marketCap as number ?? null),
         currentAssets: empty, currentLiabilities: empty, accountsReceivable: empty,
         longTermDebt: empty, stockholdersEquity: empty, retainedEarnings: empty,
         commonStock: empty, operatingIncome: empty, interestExpense: empty,

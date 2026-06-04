@@ -20,19 +20,21 @@ interface ScoreCard {
 
 // ================================================================
 // 1. Altman Z-Score — Bankruptcy & Credit Risk
-// Z = 1.2*X1 + 1.4*X2 + 3.3*X3 + 0.6*X4 + 1.0*X5
+// Z = 1.2×X₁ + 1.4×X₂ + 3.3×X₃ + 0.6×X₄ + 0.999×X₅
 // ================================================================
 
 export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCard {
   const ta = latest(d.totalAssets)
   const tl = latest(d.totalLiabilities)
   const ca = latest(d.currentAssets) || 0
+  // X₂: retained earnings — must match current fy, fallback to equity minus par
   const re = latest(d.retainedEarnings) || (latest(d.stockholdersEquity) || 0) - (latest(d.commonStock) || 0)
-  const ni = latest(d.netIncome)
-  const ebit = latest(d.operatingIncome) || ni // operating income proxy
-  // X₄: use actual market cap if available, otherwise equity proxy
-  const actualMktCap = mktCap || latest(d.stockholdersEquity) || 0
-  // Use TTM values for income items when available
+  // X₃: EBIT — use TTM if available, fallback to operating income, last resort net income
+  const ebitTTM = ((d as unknown) as Record<string,unknown>).ebitTTM as number
+  const ebit = ebitTTM || latest(d.operatingIncome) || latest(d.netIncome) || 0
+  // X₄: Market Cap — must use shares × price, NOT book equity
+  const actualMktCap = mktCap || (d as unknown as Record<string,unknown>).marketCap as number || latest(d.stockholdersEquity) || 0
+  // X₅: Revenue — TTM required for quarterly data
   const rev = ((d as unknown) as Record<string,unknown>).revenueTTM as number || latest(d.revenue)
 
   if (ta === 0) return { name: 'Z-Score', score: 0, maxScore: 9, rating: 'N/A', interpretation: '资产数据缺失', components: [] }
@@ -44,7 +46,7 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const x4 = tl > 0 ? actualMktCap / tl : 0
   const x5 = rev / ta
 
-  const z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
+  const z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 0.999 * x5
 
   const components = [
     { label: '营运资本/总资产', value: Math.round(x1*1000)/1000, threshold: '>0.15', pass: x1 > 0.15 },
