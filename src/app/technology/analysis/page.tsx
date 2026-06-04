@@ -49,6 +49,7 @@ function AnalysisContent() {
   const [data, setData] = useState<FinancialData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState<FetchProgress | null>(null)
 
   // Keyboard shortcuts
   useEffect(() => {
