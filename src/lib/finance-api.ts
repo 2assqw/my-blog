@@ -45,7 +45,22 @@ const CONCEPT_MAP: Record<string, MetricKey> = {
 }
 
 export async function fetchFinancials(cik: string, period: 'annual' | 'quarter'): Promise<FinancialData> {
-  // Step 1: Get filing URLs from Worker (fast, no CPU limits)
+  // Step 0: Try pre-computed database first (10-year, static, instant)
+  try {
+    const dbRes = await fetch(`/data/${cik}.json`)
+    if (dbRes.ok) {
+      const db: { quarters: Array<{ period: string; revenue: number | null; netIncome: number | null; grossProfit: number | null; totalAssets: number | null; totalLiabilities: number | null; operatingCashFlow: number | null }>; ticker: string; name: string } = await dbRes.json()
+      const qs = db.quarters || []
+      return {
+        company: db.name, ticker: db.ticker, periods: qs.map(q => q.period),
+        revenue: qs.map(q => q.revenue), netIncome: qs.map(q => q.netIncome),
+        grossProfit: qs.map(q => q.grossProfit), totalAssets: qs.map(q => q.totalAssets),
+        totalLiabilities: qs.map(q => q.totalLiabilities), operatingCashFlow: qs.map(q => q.operatingCashFlow),
+      }
+    }
+  } catch { /* fall through to live SEC */ }
+
+  // Step 1: Get filing URLs from Worker
   const res = await fetch(`${WORKER_BASE}/financials?cik=${cik}&period=${period}`)
   const info: FilingInfo = await res.json()
   if (info.error) return { company: '', ticker: '', periods: [], revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [], error: info.error }
