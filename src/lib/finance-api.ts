@@ -22,6 +22,18 @@ export interface FinancialData {
   totalLiabilities: (number | null)[]
   operatingCashFlow: (number | null)[]
   grossProfit: (number | null)[]
+  // Extended fields for quantitative algorithms
+  currentAssets?: (number | null)[]
+  currentLiabilities?: (number | null)[]
+  accountsReceivable?: (number | null)[]
+  longTermDebt?: (number | null)[]
+  stockholdersEquity?: (number | null)[]
+  retainedEarnings?: (number | null)[]
+  commonStock?: (number | null)[]
+  operatingIncome?: (number | null)[]
+  interestExpense?: (number | null)[]
+  depreciationAmortization?: (number | null)[]
+  sellingGeneralAdmin?: (number | null)[]
   error?: string
 }
 

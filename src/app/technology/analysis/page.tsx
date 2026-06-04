@@ -12,6 +12,7 @@ import { runEngine } from '@/lib/finscope-engine'
 import { computeScores, INDICATORS, IndicatorCategory } from '@/lib/finscope-indicators'
 import { analyzePatterns } from '@/lib/finscope-patterns'
 import { analyzeSentiment, extractMDAText, analyzeTrend, type SentimentScore } from '@/lib/finscope-sentiment'
+import { generateScoreReport, type ScoreReport } from '@/lib/finscope-scoring'
 
 const TABS = ['overview', 'financials', 'market', 'news', 'ratings'] as const
 type Tab = (typeof TABS)[number]
@@ -218,6 +219,7 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
     <div className="space-y-4 sm:space-y-6">
       {data.map((d, i) => (
         <div key={i} className="space-y-4">
+          <ScoreDashboard data={d} company={companies[i]} />
           <IndicatorDashboard data={d} company={companies[i]} />
           <PatternDashboard data={d} company={companies[i]} />
           <SentimentCard symbol={companies[i]} periods={d.periods} />
@@ -715,6 +717,48 @@ function DimCell({ label, color, children }: { label: string; color: string; chi
     <div className={`rounded-lg p-2 ${color === 'green' ? 'bg-green-50 dark:bg-green-900/20' : color === 'red' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800'}`}>
       <p className="text-gray-400 mb-0.5">{label}</p>
       <p className="font-medium text-gray-800 dark:text-gray-200">{children}</p>
+    </div>
+  )
+}
+
+function ScoreDashboard({ data, company }: { data: FinancialData; company: string }) {
+  const report = generateScoreReport(data)
+  const { altmanZ, beneishM, piotroskiF, consensus, consensusScore } = report
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">量化评分 · {company}</h3>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+          consensusScore >= 60 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+          consensusScore >= 35 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+          'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+        }`}>
+          {consensus === 'strong-buy' ? '★★★ 强烈推荐' : consensus === 'buy' ? '★★ 推荐' : consensus === 'hold' ? '★ 持有' : consensus === 'caution' ? '⚠ 谨慎' : '✗ 回避'} {consensusScore}/100
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[altmanZ, beneishM, piotroskiF].map(s => (
+          <div key={s.name} className="rounded-lg border border-gray-100 dark:border-gray-800 p-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-medium text-gray-500">{s.name}</span>
+              <span className="text-[9px] text-gray-400">{s.score}</span>
+            </div>
+            <p className="text-[11px] mb-2">{s.rating}</p>
+            <p className="text-[10px] text-gray-400 leading-relaxed mb-2">{s.interpretation}</p>
+            <div className="space-y-0.5">
+              {s.components.map((c, j) => (
+                <div key={j} className="flex items-center justify-between text-[9px]">
+                  <span className="text-gray-500">{c.label}</span>
+                  <span className={c.pass ? 'text-green-600' : 'text-red-500'}>{c.pass ? '✓' : '✗'} {c.threshold}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-gray-400 text-center">评分基于 SEC 10-K/10-Q 原始数据，算法引用自 Altman (1968), Beneish (1999), Piotroski (2000)</p>
     </div>
   )
 }
