@@ -63,7 +63,7 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
     if (dbRes.ok) {
       const db: { quarters: Array<{ period: string; revenue: number | null; netIncome: number | null; grossProfit: number | null; totalAssets: number | null; totalLiabilities: number | null; operatingCashFlow: number | null }>; ticker: string; name: string } = await dbRes.json()
       const qs = db.quarters || []
-      const empty: (null)[] = []
+      const empty: (number | null)[] = []
       return {
         company: db.name, ticker: db.ticker, periods: qs.map(q => q.period),
         revenue: qs.map(q => q.revenue), netIncome: qs.map(q => q.netIncome),
@@ -135,7 +135,7 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
     }
   }
 
-  const e = [] as (null)[]
+  const e: (number | null)[] = []
   return {
     company: info.company, ticker: info.ticker, periods,
     ...aligned,
