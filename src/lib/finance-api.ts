@@ -174,7 +174,7 @@ function parseIXBRL(text: string): IXBRLData {
 
   // Parse iXBRL values
   type RawEntry = { period: string; value: number }
-  const raw: Record<CoreMetricKey, RawEntry[]> = {
+  const raw: Record<CoreMetricKey, RawEntry[]> & Partial<Record<MetricKey, RawEntry[]>> = {
     revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [],
   }
 
@@ -198,7 +198,8 @@ function parseIXBRL(text: string): IXBRLData {
 
     for (const [suffix, key] of Object.entries(CONCEPT_MAP)) {
       if (fullConcept === 'us-gaap:' + suffix || fullConcept.endsWith(':' + suffix)) {
-        raw[key].push({ period: ctxPeriod, value })
+        const k = key as CoreMetricKey
+        if (raw[k]) raw[k].push({ period: ctxPeriod, value })
         break
       }
     }
