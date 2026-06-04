@@ -63,11 +63,16 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
     if (dbRes.ok) {
       const db: { quarters: Array<{ period: string; revenue: number | null; netIncome: number | null; grossProfit: number | null; totalAssets: number | null; totalLiabilities: number | null; operatingCashFlow: number | null }>; ticker: string; name: string } = await dbRes.json()
       const qs = db.quarters || []
+      const empty: (null)[] = []
       return {
         company: db.name, ticker: db.ticker, periods: qs.map(q => q.period),
         revenue: qs.map(q => q.revenue), netIncome: qs.map(q => q.netIncome),
         grossProfit: qs.map(q => q.grossProfit), totalAssets: qs.map(q => q.totalAssets),
         totalLiabilities: qs.map(q => q.totalLiabilities), operatingCashFlow: qs.map(q => q.operatingCashFlow),
+        currentAssets: empty, currentLiabilities: empty, accountsReceivable: empty,
+        longTermDebt: empty, stockholdersEquity: empty, retainedEarnings: empty,
+        commonStock: empty, operatingIncome: empty, interestExpense: empty,
+        depreciationAmortization: empty, sellingGeneralAdmin: empty,
       }
     }
   } catch { /* fall through to live SEC */ }
@@ -75,7 +80,7 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
   // Step 1: Get filing URLs from Worker
   const res = await fetch(`${WORKER_BASE}/financials?cik=${cik}&period=${period}`)
   const info: FilingInfo = await res.json()
-  if (info.error) return { company: '', ticker: '', periods: [], revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [], error: info.error }
+  if (info.error) return { company: '', ticker: '', periods: [], revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [], error: info.error, currentAssets: [], currentLiabilities: [], accountsReceivable: [], longTermDebt: [], stockholdersEquity: [], retainedEarnings: [], commonStock: [], operatingIncome: [], interestExpense: [], depreciationAmortization: [], sellingGeneralAdmin: [] }
 
   // Step 2: Download and parse XBRL from SEC directly (client-side, no CPU limits)
   const allData: Array<{ date: string; data: ReturnType<typeof parseIXBRL> }> = []
@@ -130,11 +135,14 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
     }
   }
 
+  const e = [] as (null)[]
   return {
-    company: info.company,
-    ticker: info.ticker,
-    periods,
+    company: info.company, ticker: info.ticker, periods,
     ...aligned,
+    currentAssets: e, currentLiabilities: e, accountsReceivable: e,
+    longTermDebt: e, stockholdersEquity: e, retainedEarnings: e,
+    commonStock: e, operatingIncome: e, interestExpense: e,
+    depreciationAmortization: e, sellingGeneralAdmin: e,
   }
 }
 
