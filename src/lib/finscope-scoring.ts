@@ -43,7 +43,7 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const x1 = wc / ta
   const x2 = re / ta
   const x3 = ebit / ta
-  const x4 = tl > 0 ? actualMktCap / tl : 0
+  const x4 = tl > 0 ? Math.min(actualMktCap / tl, 10) : 0
   const x5 = rev / ta
 
   const z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 0.999 * x5
