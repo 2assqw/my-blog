@@ -29,13 +29,23 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const ca = latest(d.currentAssets) || 0
   // X₂: retained earnings — must match current fy, fallback to equity minus par
   const re = latest(d.retainedEarnings) || (latest(d.stockholdersEquity) || 0) - (latest(d.commonStock) || 0)
-  // X₃: EBIT — use TTM if available, fallback to operating income, last resort net income
-  const ebitTTM = ((d as unknown) as Record<string,unknown>).ebitTTM as number
-  const ebit = ebitTTM || latest(d.operatingIncome) || latest(d.netIncome) || 0
+  // Detect if data is quarterly (no TTM → need annualization)
+  const rawExt = d as unknown as Record<string,unknown>
+  const hasTTM = rawExt.revenueTTM != null || rawExt.netIncomeTTM != null
+  const rawRev = latest(d.revenue)
+  const rawEbit = latest(d.operatingIncome) || latest(d.netIncome) || 0
+  const rawNi = latest(d.netIncome)
+
+  // Annualize if quarterly data without TTM
+  const isQuarterly = !hasTTM && d.eps != null && d.eps[d.eps.length-1] != null
+  const factor = isQuarterly ? 4 : 1
+
+  const ebit = (rawExt.ebitTTM as number) || (isQuarterly ? rawEbit * factor : rawEbit)
+  const rev = (rawExt.revenueTTM as number) || (isQuarterly ? rawRev * factor : rawRev)
+  const ni = (rawExt.netIncomeTTM as number) || (isQuarterly ? rawNi! * factor : rawNi)
+
   // X₄: Market Cap — must use shares × price, NOT book equity
-  const actualMktCap = mktCap || (d as unknown as Record<string,unknown>).marketCap as number || latest(d.stockholdersEquity) || 0
-  // X₅: Revenue — TTM required for quarterly data
-  const rev = ((d as unknown) as Record<string,unknown>).revenueTTM as number || latest(d.revenue)
+  const actualMktCap = mktCap || rawExt.marketCap as number || latest(d.stockholdersEquity) || 0
 
   if (ta === 0) return { name: 'Z-Score', score: 0, maxScore: 9, rating: 'N/A', interpretation: '资产数据缺失', components: [] }
 
