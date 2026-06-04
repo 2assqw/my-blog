@@ -33,7 +33,7 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   // X₄: use actual market cap if available, otherwise equity proxy
   const actualMktCap = mktCap || latest(d.stockholdersEquity) || 0
   // Use TTM values for income items when available
-  const rev = (d as Record<string,unknown>).revenueTTM as number || latest(d.revenue)
+  const rev = ((d as unknown) as Record<string,unknown>).revenueTTM as number || latest(d.revenue)
 
   if (ta === 0) return { name: 'Z-Score', score: 0, maxScore: 9, rating: 'N/A', interpretation: '资产数据缺失', components: [] }
 
