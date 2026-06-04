@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { fetchFinancials, type FinancialData } from '@/lib/finance-api'
+import { fetchFinancials, type FinancialData, type FetchProgress } from '@/lib/finance-api'
 import { CompanyScore } from '@/components/CompanyScore'
 import { ScatterCompare } from '@/components/ScatterCompare'
 import { MetricChart } from '@/components/MetricChart'
@@ -71,7 +71,8 @@ function AnalysisContent() {
     if (!ciks.length) { router.push('/technology/'); return }
     setLoading(true)
     setError('')
-    Promise.all(ciks.map(c => fetchFinancials(c, period)))
+    setProgress(null)
+    Promise.all(ciks.map(c => fetchFinancials(c, period, setProgress)))
       .then(r => {
         if (r.some(x => x.error)) setError(r.find(x => x.error)?.error || '获取失败')
         else setData(r)
@@ -84,7 +85,7 @@ function AnalysisContent() {
   const title = tickers.length === 2 ? `${tickers[0]} vs ${tickers[1]}` : tickers[0] || ''
   const symbol = tickers[0] || ''
 
-  if (loading) return <Spinner />
+  if (loading) return <Spinner progress={progress} />
   if (error) return <ErrorPage error={error} />
 
   return (
@@ -118,7 +119,29 @@ function AnalysisContent() {
   )
 }
 
-function Spinner() { return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" /></div> }
+function Spinner({ progress }: { progress?: FetchProgress | null }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
+        {progress && (
+          <>
+            <p className="text-sm text-gray-500">{progress.message}</p>
+            {progress.total > 0 && (
+              <div className="w-64 mx-auto">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden dark:bg-gray-800">
+                  <div className="h-full bg-brand rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((progress.downloaded / progress.total) * 100)}%` }} />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">{progress.downloaded}/{progress.total}</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 function ErrorPage({ error }: { error: string }) {
   return <div className="flex min-h-screen items-center justify-center"><div className="text-center"><p className="text-red-500 mb-4">{error}</p><button onClick={() => window.location.reload()} className="text-brand hover:underline text-sm">重试</button></div></div>
 }
@@ -769,7 +792,7 @@ function Empty({ text }: { text: string }) {
 
 export default function AnalysisPage() {
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense fallback={<Spinner progress={null} />}>
       <AnalysisContent />
     </Suspense>
   )
