@@ -436,7 +436,6 @@ export interface EngineOutput {
   correlations: Correlation[]
   patterns: PatternResult[]
   risk: RiskAssessment
-  valuation: Valuation | null
 }
 
 export function runEngine(d: FinancialData, company: string, currentPrice?: number): EngineOutput {
@@ -455,14 +454,11 @@ export function runEngine(d: FinancialData, company: string, currentPrice?: numb
   const patterns = recognizePatterns(rows)
   const risk = adaptiveRisk(rows, mweResults, correlations, patterns)
 
-  const valuation = currentPrice && currentPrice > 0 ? computeValuation(rows, currentPrice) : null
-
   return {
     company,
     quartersAnalyzed: rows.length,
     correlations,
     patterns,
     risk,
-    valuation,
   }
 }

@@ -231,7 +231,7 @@ function FinancialsTab({ data, companies }: { data: FinancialData[]; companies: 
       <MetricChart title="经营现金流" data={data} metricKey="operatingCashFlow" companies={companies} />
       <MetricChart title="毛利润" data={data} metricKey="grossProfit" companies={companies} />
       {data.map((d, i) => (
-        <AlgorithmicSummary key={i} data={d} company={companies[i]} symbol={companies[i]} />
+        <AlgorithmicSummary key={i} data={d} company={companies[i]} />
       ))}
     </div>
   )
@@ -410,17 +410,9 @@ function InsiderCard({ cik }: { cik: string }) {
   )
 }
 
-function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; company: string; symbol: string }) {
-  const [price, setPrice] = useState<number | null>(null)
-  useEffect(() => {
-    if (!symbol) return
-    fetch(`/api/market?symbol=${symbol}`).then(r => r.json()).then(d => {
-      if (d.price) setPrice(d.price)
-    })
-  }, [symbol])
-
-  const engine = runEngine(data, company, price ?? undefined)
-  const { risk, correlations, patterns, quartersAnalyzed, valuation } = engine
+function AlgorithmicSummary({ data, company }: { data: FinancialData; company: string }) {
+  const engine = runEngine(data, company)
+  const { risk, correlations, patterns, quartersAnalyzed } = engine
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-4">
@@ -506,35 +498,6 @@ function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; co
           </div>
         )}
       </div>
-
-      {/* Valuation */}
-      {valuation && valuation.referencePrice > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">参考入场价</h4>
-          <div className="rounded-lg border border-brand-100 dark:border-brand-900 bg-brand-50/50 dark:bg-brand-900/20 p-4">
-            <div className="flex items-baseline gap-3 mb-3">
-              <span className="text-2xl font-bold text-brand">${valuation.referencePrice.toFixed(2)}</span>
-              <span className="text-xs text-gray-500">加权参考价 · 估值范围 ${valuation.lowEstimate.toFixed(2)} — ${valuation.highEstimate.toFixed(2)}</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                valuation.confidence === 'high' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                valuation.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
-                'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-              }`}>
-                可信度 {valuation.confidence === 'high' ? '高' : valuation.confidence === 'medium' ? '中' : '低'}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {valuation.methods.map(m => (
-                <div key={m.method} className="rounded bg-white dark:bg-gray-800 p-2 text-center">
-                  <p className="text-[10px] text-gray-400">{m.method}</p>
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">${m.price.toFixed(2)}</p>
-                  <p className="text-[9px] text-gray-400">{m.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Disclaimer */}
       <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3">
