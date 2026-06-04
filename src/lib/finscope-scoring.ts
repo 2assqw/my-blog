@@ -23,22 +23,25 @@ interface ScoreCard {
 // Z = 1.2*X1 + 1.4*X2 + 3.3*X3 + 0.6*X4 + 1.0*X5
 // ================================================================
 
-export function altmanZScore(d: FinancialData): ScoreCard {
+export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCard {
   const ta = latest(d.totalAssets)
   const tl = latest(d.totalLiabilities)
-  const ca = latest(d.currentAssets) || 0 // approximate if not available
+  const ca = latest(d.currentAssets) || 0
   const re = latest(d.retainedEarnings) || (latest(d.stockholdersEquity) || 0) - (latest(d.commonStock) || 0)
-  const ebit = latest(d.operatingIncome) || (latest(d.netIncome) + latest(d.interestExpense) || 0)
-  const mktCap = latest(d.stockholdersEquity) || 0 // proxy for market cap = book equity
-  const rev = latest(d.revenue)
+  const ni = latest(d.netIncome)
+  const ebit = latest(d.operatingIncome) || ni // operating income proxy
+  // X₄: use actual market cap if available, otherwise equity proxy
+  const actualMktCap = mktCap || latest(d.stockholdersEquity) || 0
+  // Use TTM values for income items when available
+  const rev = (d as Record<string,unknown>).revenueTTM as number || latest(d.revenue)
 
   if (ta === 0) return { name: 'Z-Score', score: 0, maxScore: 9, rating: 'N/A', interpretation: '资产数据缺失', components: [] }
 
-  const wc = (ca - latest(d.currentLiabilities)) || (ta - tl) * 0.3 // Working capital approximation
+  const wc = (ca - latest(d.currentLiabilities)) || (ta - tl) * 0.3
   const x1 = wc / ta
   const x2 = re / ta
   const x3 = ebit / ta
-  const x4 = tl > 0 ? mktCap / tl : 0
+  const x4 = tl > 0 ? actualMktCap / tl : 0
   const x5 = rev / ta
 
   const z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
@@ -193,8 +196,8 @@ export interface ScoreReport {
   consensusScore: number // 0-100
 }
 
-export function generateScoreReport(d: FinancialData): ScoreReport {
-  const z = altmanZScore(d)
+export function generateScoreReport(d: FinancialData, mktCap?: number | null): ScoreReport {
+  const z = altmanZScore(d, mktCap)
   const m = beneishMScore(d)
   const f = piotroskiFScore(d)
 
