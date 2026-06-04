@@ -45,6 +45,7 @@ interface FilingInfo {
 }
 
 type MetricKey = keyof Omit<FinancialData, 'company' | 'ticker' | 'periods' | 'error'>
+type CoreMetricKey = 'revenue' | 'netIncome' | 'totalAssets' | 'totalLiabilities' | 'operatingCashFlow' | 'grossProfit'
 
 const CONCEPT_MAP: Record<string, MetricKey> = {
   'Revenues': 'revenue',
@@ -115,8 +116,8 @@ export async function fetchFinancials(cik: string, period: 'annual' | 'quarter')
   const periods = Array.from(allPeriods).sort().slice(-10) // Last 10 periods
 
   // Build aligned arrays — pick best filing for each period
-  const keys: MetricKey[] = ['revenue', 'netIncome', 'totalAssets', 'totalLiabilities', 'operatingCashFlow', 'grossProfit']
-  const aligned: Record<MetricKey, (number | null)[]> = {
+  const keys: CoreMetricKey[] = ['revenue', 'netIncome', 'totalAssets', 'totalLiabilities', 'operatingCashFlow', 'grossProfit']
+  const aligned: Record<CoreMetricKey, (number | null)[]> = {
     revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [],
   }
 
@@ -173,7 +174,7 @@ function parseIXBRL(text: string): IXBRLData {
 
   // Parse iXBRL values
   type RawEntry = { period: string; value: number }
-  const raw: Record<MetricKey, RawEntry[]> = {
+  const raw: Record<CoreMetricKey, RawEntry[]> = {
     revenue: [], netIncome: [], totalAssets: [], totalLiabilities: [], operatingCashFlow: [], grossProfit: [],
   }
 
