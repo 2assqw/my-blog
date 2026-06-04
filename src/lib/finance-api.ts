@@ -214,9 +214,9 @@ function parseIXBRL(text: string): IXBRLData {
 
   for (const period of result.periods) {
     for (const [keyStr, arr] of Object.entries(raw) as [string, RawEntry[]][]) {
-      const k = keyStr as MetricKey
+      const k = keyStr as CoreMetricKey
       const entry = arr.find(e => e.period === period)
-      result[k].push(entry ? entry.value : null)
+      if (k in result) result[k].push(entry ? entry.value : null)
     }
   }
 
