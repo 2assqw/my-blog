@@ -420,9 +420,7 @@ function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; co
   }, [symbol])
 
   const engine = runEngine(data, company, price ?? undefined)
-  const { risk, correlations, patterns, predictions, quartersAnalyzed, valuation } = engine
-
-  const preds = Object.entries(predictions).filter(([, v]) => v.predicted != null)
+  const { risk, correlations, patterns, quartersAnalyzed, valuation } = engine
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 sm:p-6 dark:bg-gray-900 dark:border-gray-800 space-y-4">
@@ -438,29 +436,6 @@ function AlgorithmicSummary({ data, company, symbol }: { data: FinancialData; co
           风险 {risk.totalScore}/100
         </span>
       </div>
-
-      {/* Predictions */}
-      {preds.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-500 mb-2">MWE 加权预测</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {preds.map(([label, v]) => (
-              <div key={label} className="rounded-lg border border-gray-100 dark:border-gray-800 p-2 text-center">
-                <p className="text-[10px] text-gray-400">{label}</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                  {v.predicted! >= 1e9 ? `${(v.predicted!/1e9).toFixed(1)}B` : `${(v.predicted!/1e6).toFixed(1)}M`}
-                </p>
-                <div className="flex justify-center gap-1 mt-0.5">
-                  <span className="text-[9px] text-gray-400">置信度 {Math.round(v.confidence * 100)}%</span>
-                  <span className={`text-[9px] ${v.trendStrength > 0.3 ? 'text-green-600' : v.trendStrength < -0.3 ? 'text-red-500' : 'text-gray-400'}`}>
-                    {v.trendStrength > 0.3 ? '↑' : v.trendStrength < -0.3 ? '↓' : '→'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Patterns */}
       {patterns.length > 0 && (

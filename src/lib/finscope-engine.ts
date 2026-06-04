@@ -433,7 +433,6 @@ function computeValuation(rows: QRow[], currentPrice?: number): Valuation {
 export interface EngineOutput {
   company: string
   quartersAnalyzed: number
-  predictions: Record<string, MweResult>
   correlations: Correlation[]
   patterns: PatternResult[]
   risk: RiskAssessment
@@ -461,14 +460,6 @@ export function runEngine(d: FinancialData, company: string, currentPrice?: numb
   return {
     company,
     quartersAnalyzed: rows.length,
-    predictions: {
-      收入: mweResults.revenue,
-      净利润: mweResults.netIncome,
-      毛利润: mweResults.grossProfit,
-      总资产: mweResults.totalAssets,
-      总负债: mweResults.totalLiabilities,
-      经营现金流: mweResults.operatingCashFlow,
-    },
     correlations,
     patterns,
     risk,
