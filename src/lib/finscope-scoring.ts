@@ -30,18 +30,16 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   // X₂: retained earnings — must match current fy, fallback to equity minus par
   const re = latest(d.retainedEarnings) || (latest(d.stockholdersEquity) || 0) - (latest(d.commonStock) || 0)
   // Balance Sheet (Instant) — use directly, no annualization
-  // Income Statement (Duration) — raw SEC 10-Q values are single-quarter
-  // Z-Score requires annualized figures → multiply by 4 for 10-Q data
-  // TTM from database (if available) already handles this correctly
+  // Income Statement (Duration) — SEC 10-Q values are single quarter (3 months)
+  // Z-Score requires ANNUAL figures → multiply by 4
+  // TTM from database (if available per-field) already handles this
   const rawExt = d as unknown as Record<string,unknown>
-  const hasTTM = (rawExt.revenueTTM as number | null) != null
-
   const rawRev = latest(d.revenue)
   const rawEbit = latest(d.operatingIncome) || latest(d.netIncome) || 0
 
-  // If no TTM: assume quarterly → ×4 annualize for Z-Score
-  const ebit = (rawExt.ebitTTM as number) || (hasTTM ? rawEbit : rawEbit * 4)
-  const rev = (rawExt.revenueTTM as number) || (hasTTM ? rawRev : rawRev * 4)
+  // Per-field TTM check: each field independently determines if annualized
+  const ebit = (rawExt.ebitTTM as number) || rawEbit * 4  // EBIT rarely has TTM → always ×4
+  const rev = (rawExt.revenueTTM as number) || rawRev * 4  // Revenue might have TTM from DB
 
   // X₄: Market Cap — must use shares × price, NOT book equity
   const actualMktCap = mktCap || rawExt.marketCap as number || latest(d.stockholdersEquity) || 0
