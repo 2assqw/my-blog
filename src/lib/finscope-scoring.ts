@@ -29,21 +29,19 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const ca = latest(d.currentAssets) || 0
   // X₂: retained earnings — must match current fy, fallback to equity minus par
   const re = latest(d.retainedEarnings) || (latest(d.stockholdersEquity) || 0) - (latest(d.commonStock) || 0)
-  // Detect fiscal quarter for annualization factor
-  // YTD values: Q1=3mo→×4, Q2=6mo→×2, Q3=9mo→×1.33, FY=12mo→×1
+  // Balance Sheet (Instant) — use directly, no annualization
+  // Income Statement (Duration) — raw SEC 10-Q values are single-quarter
+  // Z-Score requires annualized figures → multiply by 4 for 10-Q data
+  // TTM from database (if available) already handles this correctly
   const rawExt = d as unknown as Record<string,unknown>
-  const hasTTM = (rawExt.revenueTTM as number | null) != null || (rawExt.netIncomeTTM as number | null) != null
-  // Try to get fiscal period from database
-  const fpStr = (rawExt._fp as string) || (d.periods?.length > 0 ? d.periods[d.periods.length-1] : '')
-  const fp = fpStr?.includes('Q1') || fpStr?.endsWith('-01') || fpStr?.endsWith('-04') ? 4 :
-             fpStr?.includes('Q2') || fpStr?.endsWith('-07') ? 2 :
-             fpStr?.includes('Q3') || fpStr?.endsWith('-10') ? 1.33 : 1
-  const needAnnualize = !hasTTM && fp > 1
+  const hasTTM = (rawExt.revenueTTM as number | null) != null
 
   const rawRev = latest(d.revenue)
   const rawEbit = latest(d.operatingIncome) || latest(d.netIncome) || 0
-  const ebit = (rawExt.ebitTTM as number) || (needAnnualize ? rawEbit * fp : rawEbit)
-  const rev = (rawExt.revenueTTM as number) || (needAnnualize ? rawRev * fp : rawRev)
+
+  // If no TTM: assume quarterly → ×4 annualize for Z-Score
+  const ebit = (rawExt.ebitTTM as number) || (hasTTM ? rawEbit : rawEbit * 4)
+  const rev = (rawExt.revenueTTM as number) || (hasTTM ? rawRev : rawRev * 4)
 
   // X₄: Market Cap — must use shares × price, NOT book equity
   const actualMktCap = mktCap || rawExt.marketCap as number || latest(d.stockholdersEquity) || 0
