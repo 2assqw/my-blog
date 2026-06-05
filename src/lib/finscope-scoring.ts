@@ -50,7 +50,7 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
   const x1 = wc / ta
   const x2 = re / ta
   const x3 = ebit / ta
-  const x4 = tl > 0 ? Math.min(actualMktCap / tl, 10) : 0
+  const x4 = tl > 0 ? actualMktCap / tl : 0
   const x5 = rev / ta
 
   const z = (
@@ -84,17 +84,21 @@ export function altmanZScore(d: FinancialData, mktCap?: number | null): ScoreCar
 // ================================================================
 
 export function beneishMScore(d: FinancialData): ScoreCard {
-  const rev = latest(d.revenue), revP = prev(d.revenue)
-  const cogs = rev - latest(d.grossProfit)
-  const cogsP = revP - prev(d.grossProfit)
+  // Annualize income items: SEC 10-Q values are quarterly → ×4 for annual
+  const rawExt = d as unknown as Record<string,unknown>
+  const annual = (raw: number, ttmKey: string) => (rawExt[ttmKey] as number) || raw * 4
+
+  const rev = annual(latest(d.revenue), 'revenueTTM'), revP = annual(prev(d.revenue), '')
+  const cogs = rev - annual(latest(d.grossProfit), '')
+  const cogsP = revP - annual(prev(d.grossProfit), '')
   const recv = latest(d.accountsReceivable) || 0, recvP = prev(d.accountsReceivable) || 0
   const ta = latest(d.totalAssets), taP = prev(d.totalAssets)
   const ca = latest(d.currentAssets) || 0, caP = prev(d.currentAssets) || 0
   const cl = latest(d.currentLiabilities) || 0, clP = prev(d.currentLiabilities) || 0
   const tl = latest(d.totalLiabilities), tlP = prev(d.totalLiabilities) || 0
-  const ni = latest(d.netIncome), niP = prev(d.netIncome)
-  const ocf = latest(d.operatingCashFlow), ocfP = prev(d.operatingCashFlow) || 0
-  const sgai = latest(d.sellingGeneralAdmin) || 0, sgaiP = prev(d.sellingGeneralAdmin) || 0
+  const ni = annual(latest(d.netIncome), 'netIncomeTTM'), niP = annual(prev(d.netIncome), '')
+  const ocf = annual(latest(d.operatingCashFlow), 'operatingCashFlowTTM'), ocfP = annual(prev(d.operatingCashFlow), '')
+  const sgai = annual(latest(d.sellingGeneralAdmin) || 0, ''), sgaiP = annual(prev(d.sellingGeneralAdmin) || 0, '')
   const depr = latest(d.depreciationAmortization) || (ta * 0.05), deprP = prev(d.depreciationAmortization) || (taP * 0.05)
 
   // Avoid division by zero
