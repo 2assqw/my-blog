@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/investment/TechNavbar';
 import { ScoreBadge } from '@/components/investment/ScoreBadge';
-import { api, RankingEntry } from '../@/lib/investment-api';
+import { api, RankingEntry } from '@/lib/investment-api';
 import Link from 'next/link';
 
 export default function ScreenerPage() {

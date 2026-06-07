@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Navbar from '@/components/investment/TechNavbar';
 import { ScoreBar } from '@/components/investment/ScoreBadge';
-import { api, CompanyScore } from '../@/lib/investment-api';
+import { api, CompanyScore } from '@/lib/investment-api';
 
 export default function ComparePage() {
   const [t1, setT1] = useState('');
