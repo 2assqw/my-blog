@@ -1,0 +1,17 @@
+name = "blog-download-worker"
+main = "src/index.ts"
+compatibility_date = "2026-08-09"
+
+[[r2_buckets]]
+binding = "BLOG_DOWNLOADS"
+bucket_name = "blog-downloads"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-downloads-db"
+database_id = ""  # fill after `wrangler d1 create`
+
+[env.production]
+routes = [
+  { pattern = "dl.2assqw.cc/*", custom_domain = true }
+]
