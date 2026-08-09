@@ -31,13 +31,8 @@ export interface DownloadFile {
   size?: number
 }
 
-export interface DownloadPostFrontmatter {
-  title: string
-  date: string
-  tags: string[]
-  summary: string
+export interface DownloadPostFrontmatter extends PostFrontmatter {
   cover?: string
-  draft?: boolean
 }
 
 export interface DownloadPost {
