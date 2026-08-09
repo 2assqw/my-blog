@@ -9,9 +9,4 @@ bucket_name = "blog-downloads"
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-downloads-db"
-database_id = ""  # fill after `wrangler d1 create`
-
-[env.production]
-routes = [
-  { pattern = "dl.2assqw.cc/*", custom_domain = true }
-]
+database_id = "76f32689-ce8f-4ba5-9f78-404071a2e20b"  # fill after `wrangler d1 create`
