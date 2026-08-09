@@ -24,3 +24,25 @@ export interface Project {
   }
   image?: string
 }
+
+export interface DownloadFile {
+  name: string
+  r2Key: string
+  size?: number
+}
+
+export interface DownloadPostFrontmatter {
+  title: string
+  date: string
+  tags: string[]
+  summary: string
+  cover?: string
+  draft?: boolean
+}
+
+export interface DownloadPost {
+  slug: string
+  frontmatter: DownloadPostFrontmatter
+  files: DownloadFile[]
+  content: string
+}
