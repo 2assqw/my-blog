@@ -15,6 +15,9 @@ out/
 # debug
 npm-debug.log*
 
+# r2 meta
+content/r2-meta.json
+
 # env
 .env*.local
 
