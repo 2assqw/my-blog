@@ -56,10 +56,7 @@ export async function getDownloadPosts(): Promise<DownloadPost[]> {
   }
 }
 
-export async function getDownloadPost(slug: string): Promise<DownloadPost | null> {
-  const r2Meta = await loadR2Meta()
-  const filePath = path.join(DOWNLOADS_DIR, `${slug}.mdx`)
-
+async function tryReadPost(filePath: string, slug: string, r2Meta: Record<string, { size: number; etag: string }>): Promise<DownloadPost | null> {
   try {
     const raw = await fs.readFile(filePath, 'utf-8')
     const { data, content } = matter(raw)
@@ -78,4 +75,14 @@ export async function getDownloadPost(slug: string): Promise<DownloadPost | null
   } catch {
     return null
   }
+}
+
+export async function getDownloadPost(slug: string): Promise<DownloadPost | null> {
+  const r2Meta = await loadR2Meta()
+
+  const post =
+    (await tryReadPost(path.join(DOWNLOADS_DIR, `${slug}.mdx`), slug, r2Meta)) ??
+    (await tryReadPost(path.join(DOWNLOADS_DIR, `${slug}.md`), slug, r2Meta))
+
+  return post
 }
