@@ -8,8 +8,11 @@ interface R2Object {
   etag: string
 }
 
-async function main() {
+function main() {
   const outputPath = path.join(process.cwd(), 'content', 'r2-meta.json')
+
+  // Ensure content directory exists
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true })
 
   try {
     const raw = execSync('npx wrangler r2 object list blog-downloads --json', {
@@ -18,6 +21,11 @@ async function main() {
     })
 
     const objects: R2Object[] = JSON.parse(raw)
+
+    if (!Array.isArray(objects)) {
+      throw new Error('Unexpected output from wrangler r2 object list')
+    }
+
     const meta: Record<string, { size: number; etag: string }> = {}
 
     for (const obj of objects) {
@@ -29,7 +37,6 @@ async function main() {
     console.log(`[fetch-r2-meta] Wrote ${Object.keys(meta).length} entries to ${outputPath}`)
   } catch (err) {
     console.warn('[fetch-r2-meta] Failed to fetch R2 metadata (bucket may be empty or wrangler not configured):', (err as Error).message)
-    // Write empty meta so build doesn't break
     fs.writeFileSync(outputPath, '{}')
   }
 }
