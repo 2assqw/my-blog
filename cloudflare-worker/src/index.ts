@@ -12,7 +12,7 @@ export default {
     const url = new URL(request.url)
 
     // GET /dl/:slug/:fingerprint  (fingerprint = URL-encoded filename)
-    const dlMatch = url.pathname.match(/^\/([^/]+)\/([^/]+)$/)
+    const dlMatch = url.pathname.match(/^\/dl\/([^/]+)\/([^/]+)$/)
     if (dlMatch) {
       const [, slug, fp] = dlMatch
       const filename = decodeURIComponent(fp)
