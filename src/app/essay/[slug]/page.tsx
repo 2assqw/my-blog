@@ -1,37 +1,12 @@
 import { getPost, getEssayPosts } from '@/lib/posts'
 import { MDXRenderer } from '@/components/MDXRenderer'
-import { BookReader } from '@/components/BookReader'
 import { format, parseISO } from 'date-fns'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 interface Props {
   params: Promise<{ slug: string }>
-}
-
-function splitContent(raw: string, targetChars: number): string[] {
-  const pages: string[] = []
-  let current = ''
-  let inFence = false
-
-  const blocks = raw.split(/\n\n+/)
-
-  for (const block of blocks) {
-    const trimmed = block.trim()
-    if (trimmed.startsWith('```')) {
-      inFence = !inFence
-    }
-
-    if (!inFence && current && current.length + trimmed.length > targetChars + 200) {
-      pages.push(current.trim())
-      current = trimmed
-    } else {
-      current += (current ? '\n\n' : '') + trimmed
-    }
-  }
-
-  if (current.trim()) pages.push(current.trim())
-  return pages.length > 0 ? pages : [raw]
 }
 
 export async function generateStaticParams() {
@@ -56,20 +31,47 @@ export default async function EssayDetailPage({ params }: Props) {
   if (!post) notFound()
 
   const { frontmatter, content } = post
-  const rawPages = splitContent(content, 1000)
-
-  // Render each page through MDXRenderer at build time
-  const renderedPages = rawPages.map((pageContent, i) => (
-    <MDXRenderer key={i} source={pageContent} />
-  ))
 
   return (
-    <BookReader
-      title={frontmatter.title}
-      date={format(parseISO(frontmatter.date), 'yyyy-MM-dd')}
-      backHref="/essay/"
-      backLabel="Back to Essay"
-      pages={renderedPages}
-    />
+    <div className="relative overflow-hidden">
+      <div className="deco-post-glow deco-post-glow--a" />
+      <div className="deco-post-glow deco-post-glow--b" />
+      <div className="mx-auto max-w-article px-6 py-16 relative z-[1]">
+        <Link
+          href="/essay/"
+          className="inline-flex items-center text-sm text-gray-400 hover:text-gray-600 transition-colors mb-8"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+          Back to Essay
+        </Link>
+
+        <header className="mb-10">
+          <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
+            <time dateTime={frontmatter.date}>
+              {format(parseISO(frontmatter.date), 'yyyy-MM-dd')}
+            </time>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            {frontmatter.title}
+          </h1>
+          <div className="flex gap-1.5 flex-wrap">
+            {frontmatter.tags?.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs px-2 py-0.5 rounded-md bg-brand-50 text-brand-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </header>
+
+        <article>
+          <MDXRenderer source={content} />
+        </article>
+      </div>
+    </div>
   )
 }

@@ -9,4 +9,4 @@ bucket_name = "blog-downloads"
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-downloads-db"
-database_id = "76f32689-ce8f-4ba5-9f78-404071a2e20b"  # fill after `wrangler d1 create`
+database_id = "bf8f414a-717a-4fac-aec9-8930dddcae19"  # fill after `wrangler d1 create`
