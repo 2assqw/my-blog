@@ -1,5 +1,6 @@
 import { getPost, getEssayPosts } from '@/lib/posts'
 import { MDXRenderer } from '@/components/MDXRenderer'
+import { FontWeightControl } from '@/components/FontWeightControl'
 import { format, parseISO } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -37,15 +38,18 @@ export default async function EssayDetailPage({ params }: Props) {
       <div className="deco-post-glow deco-post-glow--a" />
       <div className="deco-post-glow deco-post-glow--b" />
       <div className="mx-auto max-w-article px-6 py-16 relative z-[1]">
-        <Link
-          href="/essay/"
-          className="inline-flex items-center text-sm text-gray-400 hover:text-gray-600 transition-colors mb-8"
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
-          Back to Essay
-        </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/essay/"
+            className="inline-flex items-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Back to Essay
+          </Link>
+          <FontWeightControl />
+        </div>
 
         <header className="mb-10">
           <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
@@ -68,7 +72,7 @@ export default async function EssayDetailPage({ params }: Props) {
           </div>
         </header>
 
-        <article>
+        <article style={{ fontWeight: 'var(--essay-font-weight, 400)' }}>
           <MDXRenderer source={content} />
         </article>
       </div>

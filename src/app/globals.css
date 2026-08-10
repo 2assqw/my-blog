@@ -29,6 +29,7 @@
   .dark .bg-brand-100 { background: #312e81; }
   .dark a { color: #818cf8; }
   .dark a:hover { color: #a5b4fc; }
+  .dark .bg-white\/80 { background: rgba(17, 24, 39, 0.8); }
 
   /* Global paper noise texture — SVG feTurbulence, barely visible */
   body::before {
