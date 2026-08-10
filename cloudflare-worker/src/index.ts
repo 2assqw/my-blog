@@ -19,9 +19,9 @@ export default {
       const r2Key = `downloads/${slug}/${filename}`
 
       try {
-        // Verify file exists
-        const head = await env.BLOG_DOWNLOADS.head(r2Key)
-        if (!head) {
+        // Get the object from R2
+        const object = await env.BLOG_DOWNLOADS.get(r2Key)
+        if (!object) {
           return new Response('File not found', { status: 404 })
         }
 
@@ -30,19 +30,15 @@ export default {
           'INSERT INTO downloads (slug, r2_key) VALUES (?, ?)'
         ).bind(slug, r2Key).run()
 
-        // Generate presigned URL (5 min expiry)
-        const presigned = await env.BLOG_DOWNLOADS.createPresignedUrl({
-          key: r2Key,
-          method: 'GET',
-          expiresIn: 300,
-        })
+        // Return file directly
+        const headers = new Headers()
+        object.writeHttpMetadata(headers)
+        headers.set('etag', object.httpEtag)
+        headers.set('Content-Disposition', `attachment; filename="${filename}"`)
 
-        return new Response(null, {
-          status: 307,
-          headers: {
-            Location: presigned,
-            'Cache-Control': 'no-cache',
-          },
+        return new Response(object.body, {
+          status: 200,
+          headers,
         })
       } catch (e) {
         console.error('Download error:', e)
