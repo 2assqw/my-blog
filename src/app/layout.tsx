@@ -14,6 +14,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
+      <head>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+      </head>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <Header />

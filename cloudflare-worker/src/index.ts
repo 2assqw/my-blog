@@ -1,6 +1,20 @@
 export interface Env {
   BLOG_DOWNLOADS: R2Bucket
   DB: D1Database
+  TURNSTILE_SECRET_KEY: string
+}
+
+async function verify(token: string, secret: string): Promise<boolean> {
+  const body = new FormData()
+  body.append('secret', secret)
+  body.append('response', token)
+
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body,
+  })
+  const data = await res.json() as { success: boolean }
+  return data.success
 }
 
 // r2Key convention: downloads/<slug>/<filename>
@@ -19,6 +33,16 @@ export default {
       const r2Key = `downloads/${slug}/${filename}`
 
       try {
+        // Verify Turnstile token
+        const token = url.searchParams.get('token')
+        if (!token) {
+          return new Response('Verification required', { status: 403 })
+        }
+        const valid = await verify(token, env.TURNSTILE_SECRET_KEY)
+        if (!valid) {
+          return new Response('Verification failed', { status: 403 })
+        }
+
         // Get the object from R2
         const object = await env.BLOG_DOWNLOADS.get(r2Key)
         if (!object) {
