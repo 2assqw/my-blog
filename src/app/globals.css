@@ -23,6 +23,12 @@
   .dark .prose { color: #d1d5db; }
   .dark .text-gray-500 { color: #9ca3af; }
   .dark .text-gray-400 { color: #6b7280; }
+  .dark .text-brand { color: #818cf8; }
+  .dark .text-brand-600 { color: #a5b4fc; }
+  .dark .bg-brand-50 { background: #1e1b4b; }
+  .dark .bg-brand-100 { background: #312e81; }
+  .dark a { color: #818cf8; }
+  .dark a:hover { color: #a5b4fc; }
 
   /* Global paper noise texture — SVG feTurbulence, barely visible */
   body::before {
