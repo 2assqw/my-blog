@@ -2,11 +2,13 @@ import { compileMDX } from 'next-mdx-remote/rsc'
 import remarkGfm from 'remark-gfm'
 import { Callout } from './Callout'
 import { CodeBlock } from './CodeBlock'
+import { Glossary } from './Glossary'
 import Link from 'next/link'
 
 const components = {
   Callout,
   CodeBlock,
+  Glossary,
   a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     const href = props.href || '#'
     const isExternal = href.startsWith('http')
