@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-800 antialiased transition-colors duration-500;
+    @apply bg-gray-50 text-black antialiased transition-colors duration-500;
   }
 
   /* Dark mode — use direct CSS, not @apply (avoids Tailwind circular deps) */
@@ -30,6 +30,17 @@
   .dark a { color: #818cf8; }
   .dark a:hover { color: #a5b4fc; }
   .dark .bg-white\/80 { background: rgba(17, 24, 39, 0.8); }
+
+  /* Pure black prose text, dark mode override */
+  .prose { color: #000; }
+  .prose h1, .prose h2, .prose h3, .prose h4 { color: #000; }
+  .prose strong { color: #000; }
+  .dark .prose { color: #d1d5db; }
+  .dark .prose h1,
+  .dark .prose h2,
+  .dark .prose h3,
+  .dark .prose h4,
+  .dark .prose strong { color: #f3f4f6; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translate(-50%, 4px); }
