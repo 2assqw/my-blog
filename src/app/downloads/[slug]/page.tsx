@@ -45,7 +45,7 @@ export default async function DownloadDetailPage({ params }: Props) {
           <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
-          Back to Downloads
+          Back
         </Link>
 
         <header className="mb-10">

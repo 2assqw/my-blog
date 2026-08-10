@@ -22,7 +22,7 @@ export default async function DownloadsPage() {
       <div className="mx-auto max-w-3xl px-6 py-16 relative z-[1]">
         <FadeUp>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Downloads</h1>
-          <p className="text-gray-500 mb-10">资源分享与下载</p>
+          <p className="text-gray-500 mb-10">资源分享</p>
         </FadeUp>
 
         {posts.length === 0 ? (
