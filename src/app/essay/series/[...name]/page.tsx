@@ -1,4 +1,4 @@
-import { getSeriesPosts } from '@/lib/posts'
+import { getSeriesPosts, getSeriesList } from '@/lib/posts'
 import { FadeUp } from '@/components/FadeUp'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
@@ -7,6 +7,11 @@ import type { Metadata } from 'next'
 
 interface Props {
   params: Promise<{ name: string[] }>
+}
+
+export async function generateStaticParams() {
+  const series = await getSeriesList()
+  return series.map((s) => ({ name: [encodeURIComponent(s)] }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
