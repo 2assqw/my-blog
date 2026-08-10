@@ -4,6 +4,8 @@ export interface PostFrontmatter {
   tags: string[]
   summary: string
   draft?: boolean
+  series?: string
+  chapter?: number
 }
 
 export interface Post {

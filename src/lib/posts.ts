@@ -50,6 +50,22 @@ export async function getEssayPosts(): Promise<Post[]> {
   return readPostsFromDir('essay', 'essay')
 }
 
+export async function getSeriesPosts(seriesName: string): Promise<Post[]> {
+  const posts = await getEssayPosts()
+  return posts
+    .filter((p) => p.frontmatter.series === seriesName)
+    .sort((a, b) => (a.frontmatter.chapter || 0) - (b.frontmatter.chapter || 0))
+}
+
+export async function getSeriesList(): Promise<string[]> {
+  const posts = await getEssayPosts()
+  const series = new Set<string>()
+  for (const p of posts) {
+    if (p.frontmatter.series) series.add(p.frontmatter.series)
+  }
+  return [...series]
+}
+
 export async function getPost(
   type: 'blog' | 'essay',
   slug: string
