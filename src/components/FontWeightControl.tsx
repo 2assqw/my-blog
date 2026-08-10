@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 const WEIGHTS = [
   { value: 300, label: '细' },
   { value: 400, label: '标准' },
-  { value: 600, label: '中粗' },
   { value: 700, label: '粗' },
 ] as const
 
